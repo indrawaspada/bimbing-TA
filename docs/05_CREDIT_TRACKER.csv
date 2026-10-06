@@ -1,0 +1,7 @@
+checkpoint,target_credits,cumulative_target,actual_credits,actual_cumulative,balance_remaining,acceptance_status,notes
+A Plan,4,4,,,,,
+B Foundation,12,16,,,,,
+C Workspace,10,26,,,,,
+D AI,10,36,,,,,
+E Acceptance and handoff,7,43,,,,,
+Reserve blockers,7,50,,,,,
