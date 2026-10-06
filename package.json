@@ -1,0 +1,38 @@
+{
+  "name": "bimbingta-copilot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test:score": "node --experimental-strip-types --no-warnings --test 'tests/score/*.test.mjs'",
+    "test:security:local": "bash scripts/local-test-db.sh && node --test 'tests/security/*.test.mjs'",
+    "test:hosted": "node --test --test-concurrency=1 tests/hosted/hosted.test.mjs",
+    "migrate:hosted": "node scripts/hosted-migrate.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.52.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-router-dom": "^6"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4",
+    "autoprefixer": "^10.6.1",
+    "pg": "^8.23.1",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^3",
+    "typescript": "^5",
+    "vite": "^6"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

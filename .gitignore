@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+supabase/.temp/
+supabase/.branches/
+backups/
+*.log
+dist-harness/
+.secrets/
+tsconfig.tsbuildinfo
