@@ -1,0 +1,1479 @@
+{
+  "product": "AI Thesis Supervision Copilot",
+  "version": "1.0",
+  "owner": "Dr. Indra Waspada, S.T., M.T.I.",
+  "rules": [
+    {
+      "rule_id": "B1-R01",
+      "chapter": "B1",
+      "trigger": "Fenomena dan konteks tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Konteks nyata, ruang lingkup dan relevansi penelitian dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R02",
+      "chapter": "B1",
+      "trigger": "Problem tidak spesifik",
+      "severity": "Critical",
+      "pass_criterion": "Masalah, pihak terdampak dan kondisi yang ingin diperbaiki dapat diidentifikasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R03",
+      "chapter": "B1",
+      "trigger": "Solusi saat ini tidak dibahas",
+      "severity": "Major",
+      "pass_criterion": "Ada sintesis pendekatan yang telah digunakan untuk menangani problem.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R04",
+      "chapter": "B1",
+      "trigger": "Keterbatasan solusi tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Gap atau kebutuhan lokal diturunkan dari bukti; S1 tidak wajib menciptakan algoritma baru.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R05",
+      "chapter": "B1",
+      "trigger": "Usulan solusi tidak menjawab problem",
+      "severity": "Critical",
+      "pass_criterion": "Hubungan problem dengan mekanisme solusi dinyatakan dan masuk akal.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R06",
+      "chapter": "B1",
+      "trigger": "Pernyataan penelitian tidak eksplisit",
+      "severity": "Major",
+      "pass_criterion": "Pernyataan menyebut tindakan penelitian, objek, metode dan bentuk evaluasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R07",
+      "chapter": "B1",
+      "trigger": "Alur argumentasi terputus",
+      "severity": "Major",
+      "pass_criterion": "Fenomena → problem → solusi saat ini → gap → usulan → penelitian saling terhubung.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R08",
+      "chapter": "B1",
+      "trigger": "Klaim problem tidak didukung bukti",
+      "severity": "Major",
+      "pass_criterion": "Data, referensi atau observasi terdokumentasi mendukung klaim masalah.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R09",
+      "chapter": "B1",
+      "trigger": "Pemilihan metode tidak dijustifikasi",
+      "severity": "Major",
+      "pass_criterion": "Alasan konseptual pemilihan metode terhubung dengan karakteristik masalah.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R10",
+      "chapter": "B1",
+      "trigger": "Tujuan tidak konsisten dengan problem",
+      "severity": "Critical",
+      "pass_criterion": "Rumusan masalah dan tujuan memiliki pasangan yang dapat ditelusuri.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R11",
+      "chapter": "B1",
+      "trigger": "Klaim fenomena tanpa sitasi",
+      "severity": "Major",
+      "pass_criterion": "Klaim eksternal didukung berita kredibel, publikasi resmi atau jurnal yang relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R12",
+      "chapter": "B1",
+      "trigger": "Sumber faktual tidak kredibel",
+      "severity": "Major",
+      "pass_criterion": "Asal sumber, otoritas dan tanggal dapat dilacak; utamakan sumber primer.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R13",
+      "chapter": "B1",
+      "trigger": "Solusi ilmiah hanya didukung berita atau blog",
+      "severity": "Major",
+      "pass_criterion": "Klaim tentang metode atau performa menggunakan paper penelitian yang relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R14",
+      "chapter": "B1",
+      "trigger": "Solusi saat ini tidak didukung paper ilmiah",
+      "severity": "Major",
+      "pass_criterion": "Gunakan paper berkualitas; prioritaskan Scopus/WoS atau SINTA 1–2 sesuai kebijakan prodi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R15",
+      "chapter": "B1",
+      "trigger": "Status indeks atau peringkat belum diverifikasi",
+      "severity": "Review",
+      "pass_criterion": "Verifikasi venue dan tahun cakupan melalui sumber resmi; tanpa akses tandai belum terverifikasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R16",
+      "chapter": "B1",
+      "trigger": "Sitasi tidak mendukung klaim",
+      "severity": "Critical",
+      "pass_criterion": "Isi sumber yang tersedia benar-benar mendukung klaim; metadata saja tidak cukup.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R17",
+      "chapter": "B1",
+      "trigger": "Referensi kurang sesuai dengan perkembangan bidang",
+      "severity": "Review",
+      "pass_criterion": "Nilai kemutakhiran berdasarkan klaim; karya fundamental lama tetap dapat digunakan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B1-R18",
+      "chapter": "B1",
+      "trigger": "Generalisasi bidang dari bukti terbatas",
+      "severity": "Major",
+      "pass_criterion": "Cakupan kesimpulan tentang solusi sesuai jumlah, keragaman dan konteks sumber.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R01",
+      "chapter": "B2",
+      "trigger": "Landasan teori tidak menggunakan sumber otoritatif",
+      "severity": "Major",
+      "pass_criterion": "Teori mapan didukung textbook/rujukan fundamental; perkembangan baru didukung paper relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R02",
+      "chapter": "B2",
+      "trigger": "Konsep inti penelitian tidak tercakup",
+      "severity": "Major",
+      "pass_criterion": "Ada peta konsep yang diturunkan dari problem, metode dan evaluasi penelitian.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R03",
+      "chapter": "B2",
+      "trigger": "Penelitian terkait hanya berupa daftar ringkasan",
+      "severity": "Major",
+      "pass_criterion": "Ada sintesis persamaan, perbedaan, keterbatasan dan posisi penelitian.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R04",
+      "chapter": "B2",
+      "trigger": "Perbandingan penelitian tidak memiliki dimensi konsisten",
+      "severity": "Major",
+      "pass_criterion": "Bandingkan problem, data, metode, evaluasi dan batas konteks yang relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R05",
+      "chapter": "B2",
+      "trigger": "Gap tidak diturunkan dari penelitian terkait",
+      "severity": "Major",
+      "pass_criterion": "Gap memiliki bukti dan keterkaitan dengan penelitian yang diusulkan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R06",
+      "chapter": "B2",
+      "trigger": "Definisi antarbagian tidak konsisten",
+      "severity": "Major",
+      "pass_criterion": "Istilah dan definisi operasional selaras dengan Bab I dan III.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R07",
+      "chapter": "B2",
+      "trigger": "Klaim teori tanpa sitasi",
+      "severity": "Major",
+      "pass_criterion": "Definisi, mekanisme dan klaim ilmiah eksternal mempunyai rujukan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R08",
+      "chapter": "B2",
+      "trigger": "Sumber tidak cocok dengan klaim",
+      "severity": "Major",
+      "pass_criterion": "Sumber teoritis mendukung konsep, bukan sekadar halaman pemasaran produk.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R09",
+      "chapter": "B2",
+      "trigger": "Status referensi dianggap pasti tanpa verifikasi",
+      "severity": "Review",
+      "pass_criterion": "Pisahkan kualitas isi, indeks venue dan kemutakhiran; catat sumber verifikasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R10",
+      "chapter": "B2",
+      "trigger": "Teori tidak terhubung dengan penelitian",
+      "severity": "Review",
+      "pass_criterion": "Konsep yang dibahas mendukung desain, implementasi atau evaluasi secara nyata.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R11",
+      "chapter": "B2",
+      "trigger": "Subbab hanya menjelaskan produk/tool",
+      "severity": "Major",
+      "pass_criterion": "Konsep ilmiah dijelaskan sebelum produk sebagai contoh implementasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R12",
+      "chapter": "B2",
+      "trigger": "Cara kerja algoritma tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Mekanisme, input, tahapan, output dan asumsi utama dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R13",
+      "chapter": "B2",
+      "trigger": "Formulasi konsep matematis tidak memadai",
+      "severity": "Review",
+      "pass_criterion": "Rumus/notasi disediakan bila diperlukan untuk memahami atau menerapkan konsep.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R14",
+      "chapter": "B2",
+      "trigger": "Proses kompleks sulit dipahami tanpa representasi",
+      "severity": "Review",
+      "pass_criterion": "Skema, alur atau pseudocode digunakan sesuai kebutuhan penjelasan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R15",
+      "chapter": "B2",
+      "trigger": "Simbol tidak didefinisikan",
+      "severity": "Major",
+      "pass_criterion": "Simbol yang digunakan memiliki makna, domain atau satuan jika relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R16",
+      "chapter": "B2",
+      "trigger": "Variabel rumus tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Setiap variabel, asumsi dan batas penerapan rumus dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R17",
+      "chapter": "B2",
+      "trigger": "Diagram tanpa penjelasan komponen",
+      "severity": "Major",
+      "pass_criterion": "Narasi menerangkan komponen, hubungan dan makna diagram.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R18",
+      "chapter": "B2",
+      "trigger": "Judul produk tanpa konsep dasar",
+      "severity": "Major",
+      "pass_criterion": "Nama produk boleh menjadi judul bila konsep dasar tetap dibahas memadai.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R19",
+      "chapter": "B2",
+      "trigger": "Subbab menjadi tutorial software",
+      "severity": "Major",
+      "pass_criterion": "Langkah instalasi/penggunaan dipindahkan ke bagian implementasi atau lampiran bila diperlukan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B2-R20",
+      "chapter": "B2",
+      "trigger": "Teori dan konfigurasi penelitian tercampur",
+      "severity": "Review",
+      "pass_criterion": "Bedakan prinsip umum di Bab II dengan penerapan khusus di Bab III/IV.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R01",
+      "chapter": "B3",
+      "trigger": "Tidak ada ilustrasi alur metodologi",
+      "severity": "Major",
+      "pass_criterion": "Wajib ada ilustrasi alur penelitian dari input hingga evaluasi dan keluaran.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R02",
+      "chapter": "B3",
+      "trigger": "Ilustrasi tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Setiap tahap utama mempunyai penjelasan teks dan rujukan ke gambar.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R03",
+      "chapter": "B3",
+      "trigger": "Tahapan tidak runtut",
+      "severity": "Major",
+      "pass_criterion": "Urutan, ketergantungan dan iterasi logis serta konsisten.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R04",
+      "chapter": "B3",
+      "trigger": "Metodologi tidak menjawab tujuan",
+      "severity": "Critical",
+      "pass_criterion": "Desain penelitian sesuai dengan problem dan tujuan Bab I.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R05",
+      "chapter": "B3",
+      "trigger": "Objek/data/subjek tidak jelas",
+      "severity": "Major",
+      "pass_criterion": "Sumber, jumlah, karakteristik, periode bila relevan, dan cara memperoleh data dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R06",
+      "chapter": "B3",
+      "trigger": "Penerapan metode tidak jelas",
+      "severity": "Major",
+      "pass_criterion": "Input, fitur/komponen, konfigurasi, prosedur dan output penelitian dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R07",
+      "chapter": "B3",
+      "trigger": "Tidak ada skenario evaluasi",
+      "severity": "Critical",
+      "pass_criterion": "Ada prosedur evaluasi untuk tujuan utama, termasuk instrumen dan kriteria penilaian.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R08",
+      "chapter": "B3",
+      "trigger": "Metrik tidak sesuai problem",
+      "severity": "Critical",
+      "pass_criterion": "Metrik memadai untuk menjawab tujuan; tidak wajib memakai seluruh metrik yang tersedia.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R09",
+      "chapter": "B3",
+      "trigger": "Alur tidak memperjelas input-output",
+      "severity": "Review",
+      "pass_criterion": "Input dan output utama dapat ditelusuri dari diagram atau narasi pendamping.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R10",
+      "chapter": "B3",
+      "trigger": "Detail tidak cukup untuk replikasi",
+      "severity": "Major",
+      "pass_criterion": "Prosedur, konfigurasi dan artefak yang material bagi hasil tersedia.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R11",
+      "chapter": "B3",
+      "trigger": "Tools dianggap sebagai metodologi",
+      "severity": "Major",
+      "pass_criterion": "Bahasa, library dan platform ditempatkan sebagai instrumen pendukung.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R12",
+      "chapter": "B3",
+      "trigger": "Tahap tidak memiliki tujuan",
+      "severity": "Review",
+      "pass_criterion": "Peran setiap tahap terhadap tujuan penelitian jelas.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R13",
+      "chapter": "B3",
+      "trigger": "Diagram dan teks berbeda",
+      "severity": "Major",
+      "pass_criterion": "Nama, urutan, percabangan dan tahap konsisten antara diagram dan narasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R14",
+      "chapter": "B3",
+      "trigger": "Metode dipilih tanpa alasan",
+      "severity": "Major",
+      "pass_criterion": "Alasan pemilihan didukung kebutuhan, karakteristik data dan teori.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R15",
+      "chapter": "B3",
+      "trigger": "Metode tidak terhubung dengan evaluasi",
+      "severity": "Major",
+      "pass_criterion": "Output metode memiliki evaluasi yang sesuai.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R16",
+      "chapter": "B3",
+      "trigger": "Input-process-output tahap tidak lengkap",
+      "severity": "Major",
+      "pass_criterion": "Tahap operasional menjelaskan apa yang masuk, dilakukan dan dihasilkan; gabungkan dengan R09 bila bukti sama.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R17",
+      "chapter": "B3",
+      "trigger": "Klaim peningkatan tanpa baseline",
+      "severity": "Critical",
+      "pass_criterion": "Bila ada klaim peningkatan/perbandingan, tentukan pembanding yang adil.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R18",
+      "chapter": "B3",
+      "trigger": "Skenario eksperimen tidak lengkap",
+      "severity": "Major",
+      "pass_criterion": "Skenario, pembagian data/partisipan, variasi dan pengulangan relevan dinyatakan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R19",
+      "chapter": "B3",
+      "trigger": "Parameter penting tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Parameter, versi data/model dan lingkungan yang material tercatat.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R20",
+      "chapter": "B3",
+      "trigger": "Tujuan tidak mempunyai langkah metodologi",
+      "severity": "Critical",
+      "pass_criterion": "Setiap tujuan dipetakan ke tahap dan evaluasi; gabungkan dengan R04 jika temuan identik.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R21",
+      "chapter": "B3",
+      "trigger": "Risiko kebocoran data tidak dikendalikan",
+      "severity": "Critical",
+      "pass_criterion": "Untuk ML, pisahkan data sebelum fitting transformasi berbasis data; fit hanya pada train, resampling hanya train; split temporal/group bila relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B3-R22",
+      "chapter": "B3",
+      "trigger": "Evaluasi dengan manusia tidak memadai",
+      "severity": "Major",
+      "pass_criterion": "Jika relevan, jelaskan rekrutmen, instrumen, persetujuan, privasi dan dasar ukuran sampel.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R01",
+      "chapter": "B4",
+      "trigger": "Realisasi metodologi tidak dapat ditelusuri",
+      "severity": "Major",
+      "pass_criterion": "Hasil tahapan utama Bab III ditampilkan; perubahan prosedur dijelaskan beserta alasannya.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R02",
+      "chapter": "B4",
+      "trigger": "Eksperimen/pengujian terencana tidak dilaporkan",
+      "severity": "Major",
+      "pass_criterion": "Setiap skenario Bab III mempunyai hasil, atau penjelasan mengapa belum dilakukan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R03",
+      "chapter": "B4",
+      "trigger": "Tujuan utama tidak memiliki bukti hasil",
+      "severity": "Critical",
+      "pass_criterion": "Setiap tujuan memiliki bukti yang relevan; tujuan belum tercapai dinyatakan secara jujur.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R04",
+      "chapter": "B4",
+      "trigger": "Hasil hanya berupa screenshot",
+      "severity": "Major",
+      "pass_criterion": "Screenshot dilengkapi analisis kebutuhan, fungsi, keluaran dan hasil pengujian yang relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R05",
+      "chapter": "B4",
+      "trigger": "Tabel/gambar tidak dijelaskan",
+      "severity": "Major",
+      "pass_criterion": "Narasi menjelaskan pola, perbandingan dan makna hasil; bukan sekadar mengulang angka.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R06",
+      "chapter": "B4",
+      "trigger": "Angka hasil tidak dapat dilacak",
+      "severity": "Major",
+      "pass_criterion": "Ada identitas skenario, dataset/sampel, konfigurasi dan dasar perhitungan yang memadai.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R07",
+      "chapter": "B4",
+      "trigger": "Metrik atau perhitungan salah",
+      "severity": "Critical",
+      "pass_criterion": "Label, denominator, satuan dan perhitungan sesuai definisi; laporkan pemeriksaan yang benar-benar dilakukan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R08",
+      "chapter": "B4",
+      "trigger": "Pembanding tidak adil",
+      "severity": "Critical",
+      "pass_criterion": "Jika membandingkan, data uji, metrik dan kondisi evaluasi sebanding; perbedaan material dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R09",
+      "chapter": "B4",
+      "trigger": "Klaim peningkatan tanpa bukti pembanding",
+      "severity": "Critical",
+      "pass_criterion": "Klaim lebih baik/cepat/mudah digunakan mempunyai hasil perbandingan relevan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R10",
+      "chapter": "B4",
+      "trigger": "Hasil test terkontaminasi pemilihan model",
+      "severity": "Critical",
+      "pass_criterion": "Jika relevan, test tidak digunakan untuk tuning; prosedur validasi dilaporkan konsisten.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R11",
+      "chapter": "B4",
+      "trigger": "Variabilitas hasil diabaikan",
+      "severity": "Review",
+      "pass_criterion": "Jika hasil sensitif terhadap seed/sampling, laporkan pengulangan dan ukuran variasi yang sesuai.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R12",
+      "chapter": "B4",
+      "trigger": "Klaim signifikan tanpa dukungan",
+      "severity": "Major",
+      "pass_criterion": "Klaim signifikansi statistik memerlukan uji/asumsi yang sesuai; bedakan selisih numerik dan manfaat praktis.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R13",
+      "chapter": "B4",
+      "trigger": "Hasil hanya dideskripsikan tanpa interpretasi",
+      "severity": "Major",
+      "pass_criterion": "Jelaskan mengapa pola muncul dengan bukti, teori atau hipotesis yang ditandai sebagai dugaan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R14",
+      "chapter": "B4",
+      "trigger": "Pembahasan tidak terhubung dengan teori/penelitian terkait",
+      "severity": "Major",
+      "pass_criterion": "Bandingkan temuan dengan Bab II; jelaskan persamaan dan perbedaan konteks.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R15",
+      "chapter": "B4",
+      "trigger": "Hasil negatif dan kasus gagal diabaikan",
+      "severity": "Major",
+      "pass_criterion": "Bahas kesalahan, kegagalan, anomali dan kondisi ketika solusi tidak bekerja.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R16",
+      "chapter": "B4",
+      "trigger": "Klaim melampaui cakupan hasil",
+      "severity": "Critical",
+      "pass_criterion": "Batasi generalisasi pada data, pengguna, kondisi dan desain yang diuji.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R17",
+      "chapter": "B4",
+      "trigger": "Keterbatasan tidak dibahas",
+      "severity": "Major",
+      "pass_criterion": "Jelaskan keterbatasan data, metode, evaluasi dan dampaknya terhadap interpretasi.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R18",
+      "chapter": "B4",
+      "trigger": "Tabel/gambar tidak konsisten",
+      "severity": "Major",
+      "pass_criterion": "Angka, label, satuan, jumlah sampel dan nomor artefak konsisten antarbagian.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R19",
+      "chapter": "B4",
+      "trigger": "Pengujian hanya menyatakan berhasil",
+      "severity": "Major",
+      "pass_criterion": "Jika rancang bangun, catat skenario, input, expected/actual output dan status, termasuk kegagalan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B4-R20",
+      "chapter": "B4",
+      "trigger": "Evaluasi tidak sesuai jenis penelitian",
+      "severity": "Major",
+      "pass_criterion": "Pilih bukti relevan: model, sistem, HCI atau IoT; klaim usability tidak dibuktikan hanya dengan functional testing.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R01",
+      "chapter": "B5",
+      "trigger": "Kesimpulan tidak menjawab rumusan masalah/tujuan",
+      "severity": "Critical",
+      "pass_criterion": "Setiap tujuan dijawab eksplisit berdasarkan hasil Bab IV.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R02",
+      "chapter": "B5",
+      "trigger": "Kesimpulan tidak didukung hasil",
+      "severity": "Critical",
+      "pass_criterion": "Setiap klaim memiliki rujukan bukti hasil yang dapat ditelusuri.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R03",
+      "chapter": "B5",
+      "trigger": "Data atau eksperimen baru muncul di kesimpulan",
+      "severity": "Major",
+      "pass_criterion": "Bab V menyintesis hasil yang sudah dilaporkan; hasil baru dipindahkan ke Bab IV.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R04",
+      "chapter": "B5",
+      "trigger": "Kesimpulan hanya meringkas kegiatan",
+      "severity": "Major",
+      "pass_criterion": "Nyatakan apa yang ditemukan/dicapai serta maknanya, bukan hanya tahapan pekerjaan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R05",
+      "chapter": "B5",
+      "trigger": "Klaim keberhasilan berlebihan",
+      "severity": "Critical",
+      "pass_criterion": "Besaran hasil, pembanding dan cakupan klaim sesuai bukti.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R06",
+      "chapter": "B5",
+      "trigger": "Status pencapaian tujuan tidak jujur atau jelas",
+      "severity": "Major",
+      "pass_criterion": "Bedakan tercapai, tercapai sebagian dan belum tercapai disertai dasar.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R07",
+      "chapter": "B5",
+      "trigger": "Kesimpulan mengabaikan batas penerapan",
+      "severity": "Major",
+      "pass_criterion": "Batas data, pengguna dan kondisi yang material ikut membatasi pernyataan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R08",
+      "chapter": "B5",
+      "trigger": "Angka kesimpulan berbeda dengan hasil",
+      "severity": "Major",
+      "pass_criterion": "Nilai, satuan dan konteks metrik konsisten dengan Bab IV.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R09",
+      "chapter": "B5",
+      "trigger": "Saran terlalu umum",
+      "severity": "Review",
+      "pass_criterion": "Saran menyebut tindakan, sasaran perbaikan dan alasan spesifik.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R10",
+      "chapter": "B5",
+      "trigger": "Saran tidak berasal dari keterbatasan/temuan",
+      "severity": "Major",
+      "pass_criterion": "Setiap saran dapat ditelusuri ke keterbatasan atau hasil Bab IV.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R11",
+      "chapter": "B5",
+      "trigger": "Saran melampaui lingkup tanpa justifikasi",
+      "severity": "Review",
+      "pass_criterion": "Pekerjaan lanjutan masuk akal dan prioritasnya dijelaskan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    },
+    {
+      "rule_id": "B5-R12",
+      "chapter": "B5",
+      "trigger": "Rekomendasi penerapan tidak memiliki syarat",
+      "severity": "Major",
+      "pass_criterion": "Jika menyarankan penerapan, jelaskan konteks, prasyarat dan evaluasi tambahan yang masih diperlukan.",
+      "applicability": "Terapkan sesuai jenis penelitian dan klaim; jika tidak relevan gunakan N/A.",
+      "evidence_required": "Lokasi dan kutipan/parafrasa naskah; periksa sumber/gambar jika tersedia.",
+      "statuses": [
+        "Pass",
+        "Partial",
+        "Fail",
+        "Not assessed",
+        "N/A"
+      ]
+    }
+  ]
+}

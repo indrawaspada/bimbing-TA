@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {calculateChapter, reviewStatus} from './score_reference.ts';
+const d=(id,weight,status,rating)=>({id,weight,status,rating});
+assert.equal(calculateChapter([d('a',1,'Assessed',3)]).score,100);
+let r=calculateChapter([d('a',1,'Assessed',3),d('b',1,'Not assessed',null)]);
+assert.equal(r.score,100);assert.equal(r.coverage,50);assert.equal(r.incomplete,true);
+r=calculateChapter([d('a',1,'Assessed',3),d('b',1,'N/A',null)]);
+assert.equal(r.coverage,100);
+assert.equal(calculateChapter([d('a',1,'Not assessed',null)]).score,null);
+assert.throws(()=>calculateChapter([d('a',1,'Assessed',4)]));
+assert.throws(()=>calculateChapter([d('a',-1,'Assessed',3)]));
+assert.throws(()=>calculateChapter([d('a',1,'Assessed',3),d('a',1,'Assessed',3)]));
+assert.equal(reviewStatus([{severity:'Critical',status:'Fail'}]),'Revisi prioritas kritis');
+console.log('Scoring checks passed');
