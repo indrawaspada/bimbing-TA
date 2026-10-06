@@ -1,0 +1,56 @@
+{
+  "verified_date": "2026-10-06",
+  "default_ai_enabled": false,
+  "notes": "Seed model IDs from official docs, subject to account access and live validation. Price fields must be verified before enabling monetary budgets. No automatic paid fallback.",
+  "models": [
+    {
+      "provider": "openai",
+      "model_id": "gpt-6.1-sol",
+      "label": "GPT-6.1 Sol — seimbang",
+      "input_usd_per_million": 2,
+      "output_usd_per_million": 10,
+      "enabled": false
+    },
+    {
+      "provider": "openai",
+      "model_id": "gpt-6-astra",
+      "label": "GPT-6 Astra — frontier",
+      "input_usd_per_million": 10,
+      "output_usd_per_million": 50,
+      "enabled": false
+    },
+    {
+      "provider": "anthropic",
+      "model_id": "claude-sonnet-5-5",
+      "label": "Claude Sonnet 5.5 — seimbang",
+      "input_usd_per_million": 2,
+      "output_usd_per_million": 10,
+      "enabled": false
+    },
+    {
+      "provider": "anthropic",
+      "model_id": "claude-opus-5-5",
+      "label": "Claude Opus 5.5 — frontier",
+      "input_usd_per_million": 4,
+      "output_usd_per_million": 20,
+      "enabled": false
+    },
+    {
+      "provider": "gemini",
+      "model_id": "gemini-3.1-pro-preview",
+      "label": "Gemini 3.1 Pro Preview — frontier; berbayar",
+      "input_usd_per_million": 2,
+      "output_usd_per_million": 12,
+      "enabled": false,
+      "price_scope": "input <=200k tokens; verify current"
+    },
+    {
+      "provider": "gemini",
+      "model_id": "gemini-3.1-flash-lite",
+      "label": "Gemini Flash-Lite — kandidat hemat; cek free tier akun",
+      "input_usd_per_million": null,
+      "output_usd_per_million": null,
+      "enabled": false
+    }
+  ]
+}
