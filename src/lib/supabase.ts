@@ -11,6 +11,17 @@ export const supabase: SupabaseClient = isConfigured
   : (null as unknown as SupabaseClient);
 
 const MESSAGES: Record<string, string> = {
+  unapplied_drafts: 'Ada draf teks atau rentang bab yang belum diterapkan. Terapkan perubahan sebelum mengunci versi.',
+  version_deletion_pending: 'Versi sedang dalam proses penghapusan setelah ekspor; referensi baru tidak dapat ditambahkan.',
+  edit_conflict: 'Konflik: data berubah di sesi lain. Muat ulang sebelum menyimpan.',
+  invalid_transition: 'Perubahan status tidak tersedia dari keadaan saat ini.',
+  proof_version_invalid: 'Bukti harus berupa versi baru yang terkunci, dengan halaman valid dan uraian perbaikan.',
+  text_confirmation_required: 'Lengkapi teks pada bab yang dipilih sebelum mengunci versi.',
+  extraction_required: 'Lengkapi ekstraksi, teks, dan rentang bab terlebih dahulu.',
+  chapter_ranges_overlap: 'Rentang bab saling tumpang tindih.',
+  version_delete_blocked: 'Versi ini tidak dapat dihapus: periksa backup, versi terbaru, dan referensi bukti atau komentar.',
+  uploaded_size_mismatch: 'Ukuran file tersimpan berbeda dari reservasi. Unggahan ditolak.',
+  reopen_reason_required: 'Isi alasan membuka kembali revisi.',
   owner_only: 'Hanya dosen pembimbing (owner) yang dapat melakukan tindakan ini.',
   owner_only_field: 'Kolom ini hanya dapat diubah oleh dosen pembimbing.',
   owner_approves_completion: 'Penyelesaian milestone disahkan oleh dosen. Ajukan status "Diajukan".',
