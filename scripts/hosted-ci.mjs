@@ -11,9 +11,24 @@ export const DEV_REF = 'tghcovjdsxirhpexpqor';
 const journalPath = join(ROOT, '.secrets', 'hosted-run.json');
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 export const isJwt = (key) => /^eyJ/.test(key || '');
+export function parseDatabaseUrl(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (/^(?:export\s+)?SUPABASE_DB_URL\s*=/i.test(raw))
+    throw new Error('SUPABASE_DB_URL: remove the variable name and equals sign; Secret Value must contain only the PostgreSQL URI.');
+  if (/^[\x22\x27`]/.test(raw))
+    throw new Error('SUPABASE_DB_URL: remove surrounding quotes or backticks from Secret Value.');
+  if (/[\r\n]/.test(raw))
+    throw new Error('SUPABASE_DB_URL: Secret Value contains multiple lines; paste only one PostgreSQL URI.');
+  if (!/^postgres(?:ql)?:\/\//i.test(raw))
+    throw new Error('SUPABASE_DB_URL: Secret Value must start with postgresql:// or postgres://; use the full Session pooler URI, not only a password or hostname.');
+  try { return new URL(raw); }
+  catch {
+    throw new Error('SUPABASE_DB_URL: malformed PostgreSQL URI; copy Connect > Session pooler and URL-encode only the password. No connection attempted.');
+  }
+}
 export function validateTarget(cfg) {
   assert.equal(cfg.url, `https://${DEV_REF}.supabase.co`, 'Hosted suite is pinned to BimbingTA DEV');
-  const uri = new URL(cfg.dbUrl);
+  const uri = parseDatabaseUrl(cfg.dbUrl);
   assert.ok(['postgres:', 'postgresql:'].includes(uri.protocol), 'Database URI must be PostgreSQL');
   const pooler = uri.hostname.endsWith('.pooler.supabase.com') && uri.username === `postgres.${DEV_REF}`;
   const direct = uri.hostname === `db.${DEV_REF}.supabase.co` && uri.username === 'postgres';
