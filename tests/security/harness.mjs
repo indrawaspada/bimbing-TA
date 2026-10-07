@@ -59,4 +59,3 @@ export async function createAuthUser(p) {
   await sql(`insert into auth.users (id, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data)
              values ($1, $2, $3, $4, $5)`, [p.id, p.email, p.confirmed ? new Date() : null, p.appMeta, p.userMeta]);
 }
-
