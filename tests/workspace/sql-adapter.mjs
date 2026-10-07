@@ -165,7 +165,7 @@ export async function rest(
           ? token
             ? 403
             : 401
-          : e.code === "40001"
+          : e.code === "PT409"
             ? 409
             : 400,
       json: { code: e.code, message: e.message },
