@@ -97,3 +97,21 @@ blindly: inspect the recorded versions first.
 ## GitHub Actions preparation
 
 The manual hosted workflow has a default read-only preflight and an optional explicitly confirmed persona mode. The runner is pinned to this DEV ref, verifies the seven exact recorded migration SQL hashes and empty fixture baseline, supports legacy JWT and modern secret API-key headers, and fails on cleanup errors. Recovery only targets the current run, using a git-ignored journal. The full suite contains 22 cases including three checkpoint C HTTP/RPC flows. This preparation does not itself constitute an executed hosted HTTP result; successful preflight is not a persona/OAuth acceptance result. See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md).
+
+## GitHub Actions read-only preflight: passed
+
+Verified **2026-10-08 04:02:57 WIB** (2026-10-07 21:02:57 UTC).
+[Workflow run 37684941532](https://github.com/indrawaspada/bimbing-TA/actions/runs/37684941532),
+attempt 2, [job 113015664119](https://github.com/indrawaspada/bimbing-TA/actions/runs/37684941532/job/113015664119).
+Launcher commit `9be58767cf121b33110895450d4a301b13fa4d5e` checked out reviewed source
+`da3f69fe94680521c9bb4df6691f47e0ce2a3fbe` with Node 22.23.3.
+
+Dependency installation, TypeScript validation, production frontend build and hosted preflight all passed.
+The runner confirmed the empty DEV baseline, seven exact migration SQL hashes, 27 RLS tables,
+private PDF bucket with its size/type limits, 92 rubric rules, public Auth settings and admin Auth read access.
+Database access used a read-only transaction. No database, Storage, Auth-provider or migration writes occurred.
+Admin values remained in GitHub Actions Secrets; none were retrieved into this workspace or published.
+
+The persona and recovery steps were deliberately skipped in default preflight mode.
+The 22 hosted persona cases, real Google application login, owner bootstrap and production hosting
+remain pending. A green preflight is not a complete hosted acceptance result.
