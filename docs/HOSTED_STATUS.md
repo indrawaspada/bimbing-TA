@@ -72,8 +72,9 @@ These verify public connectivity and two actual anonymous REST denials, not auth
 
 Correction to the earlier setup instructions: the global signup switch affects new OAuth users
 as well. Keep it ON for first Google logins; disable the Email provider for production.
-The existing synthetic HTTP suite expects global signup OFF only during its admin-created
-password-persona test. Restore it before the real Google checklist; see
+The synthetic HTTP suite leaves global signup unchanged and uses admin-created
+password personas. It temporarily adds Email only to the application's provider allowlist,
+then restores Google-only policy during cleanup; see
 [HOSTED_SETUP.md](HOSTED_SETUP.md) and
 [Supabase general configuration](https://supabase.com/docs/guides/auth/general-configuration).
 
