@@ -1,0 +1,99 @@
+name: BimbingTA hosted validation
+run-name: BimbingTA DEV - ${{ inputs.run_persona_tests && 'persona tests' || 'read-only preflight' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_persona_tests:
+        description: 'Authorize synthetic DEV users/PDFs and temporary app email allowance; restore Google-only and clean this run'
+        type: boolean
+        required: true
+        default: false
+      confirm_ref:
+        description: 'Supabase DEV project ref (full tests require an exact match)'
+        type: string
+        required: true
+        default: tghcovjdsxirhpexpqor
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bimbingta-hosted-dev-tghcovjdsxirhpexpqor
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout reviewed checkpoint C source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ba70d0979dcc97f1a7e591cae020fddc6bb828da
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without lifecycle scripts
+        id: install
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --ignore-scripts --non-interactive
+      - name: Typecheck and frontend build (public config only)
+        run: yarn build
+      - name: Read-only hosted preflight
+        id: preflight
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-ci.mjs preflight
+      - name: Persona Auth / Database / Storage / C
+        id: personas
+        if: inputs.run_persona_tests
+        timeout-minutes: 6
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BT_HOSTED_CONFIRM_REF: ${{ inputs.confirm_ref }}
+        run: yarn test:hosted
+      - name: Recover current run and restore policy
+        id: recovery
+        if: ${{ always() && inputs.run_persona_tests && steps.install.outcome == 'success' }}
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-ci.mjs cleanup
+      - name: Safe result summary
+        if: always()
+        env:
+          PREFLIGHT_RESULT: ${{ steps.preflight.outcome }}
+          PERSONA_RESULT: ${{ steps.personas.outcome }}
+          RECOVERY_RESULT: ${{ steps.recovery.outcome }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          const lines = [
+            '# BimbingTA DEV validation',
+            '',
+            'Reviewed source: `ba70d0979dcc97f1a7e591cae020fddc6bb828da`',
+            '',
+            `Read-only preflight: ${process.env.PREFLIGHT_RESULT}`,
+            `Persona suite: ${process.env.PERSONA_RESULT}`,
+            `Recovery: ${process.env.RECOVERY_RESULT}`,
+            '',
+            'Preflight success does not prove persona tests or real Google OAuth.',
+            'No migrations, reset, deployment or AI calls are part of this workflow.',
+            ''
+          ];
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n'));
+          JS
