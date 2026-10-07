@@ -217,6 +217,7 @@ describe('CHECKPOINT C (authenticated PostgREST/RPC hosted)', () => {
   const rejected = (r, code, message) => {
     assert.ok(r.status >= 400, `Expected rejection, got ${r.status}`);
     assert.equal(r.json?.code, code);
+    if (code === 'PT409') assert.equal(r.status, 409, 'Business conflict returns promptly as HTTP 409');
     assert.ok(r.json?.message?.includes(message), 'Unexpected rejection reason');
   };
   test('C01 uploaded PDF becomes sealed; cross-project RPC, stale edit and sealed text rejected', async () => {
@@ -227,7 +228,7 @@ describe('CHECKPOINT C (authenticated PostgREST/RPC hosted)', () => {
     const pages = [{ pdf_page: 1, printed_label: 'iv', text: 'Pendahuluan', source: 'pdfjs' },
       { pdf_page: 2, printed_label: '1', text: 'Metode', source: 'pdfjs' }];
     v = ok(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version, p_page_count: 2, p_pages: pages }));
-    rejected(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version - 1, p_page_count: 2, p_pages: pages }), '40001', 'edit_conflict');
+    rejected(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version - 1, p_page_count: 2, p_pages: pages }), 'PT409', 'edit_conflict');
     v = ok(await rpc(U().a, 'version_save_ranges', { p_version: v.id, p_expected: v.row_version,
       p_ranges: [{ chapter: 'B1', start_page: 1, end_page: 1 }, { chapter: 'B3', start_page: 2, end_page: 2 }] }));
     v = ok(await rpc(U().a, 'version_confirm', { p_version: v.id, p_expected: v.row_version }));
