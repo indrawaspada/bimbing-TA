@@ -19,7 +19,7 @@ Scripts print only the project ref / DB host; errors pass through a redactor.
 3. Auth → URL Configuration: Site URL = preview origin; Redirect URLs:
    `https://bimbing-ta-copilot.preview.emergentagent.com/**`, `http://localhost:5173/**`.
 
-## 3. Apply the six migrations (no reset, no data deletion)
+## 3. Apply pending migrations (seven files including checkpoint C) (no reset, no data deletion)
 ```
 node scripts/hosted-migrate.mjs                                   # dry run: lists applied/pending
 node scripts/hosted-migrate.mjs --apply --confirm-ref=<ref> --seed  # applies pending + seeds rubric/prompt/weights
@@ -60,3 +60,5 @@ Record date, accounts used (masked), pass/fail per row. Until done, OAuth status
 ## 6. Cleanup / safety
 - Never run `supabase db reset` on any project with real users.
 - The synthetic suite only deletes `bt-test-*@example.test` users and their projects/objects.
+
+Checkpoint C implementation and its hosted validation limits: [CHECKPOINT_C.md](CHECKPOINT_C.md).
