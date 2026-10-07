@@ -14,8 +14,14 @@ Scripts print only the project ref / DB host; errors pass through a redactor.
 ## 2. Supabase DEV project (dedicated to testing — no real student data)
 1. Auth → Providers → **Google**: enable with OAuth client ID/secret from Google Cloud Console
    (Authorized redirect URI: `https://<ref>.supabase.co/auth/v1/callback`).
-2. Auth → Providers → **Email**: enabled (only so synthetic personas can obtain JWTs), **"Allow new users to sign up" = OFF**.
-   Production project: Email provider disabled; `app_config.allowed_providers` stays `{google}`.
+2. Auth → Sign In / Providers: **Email** enabled only during synthetic password-JWT testing.
+   The **"Allow new users to sign up"** switch in **User Signups** is GLOBAL, not email-only.
+   The existing HTTP suite expects it OFF while testing admin-created personas. Restore it ON
+   before first Google login for the real owner or any newly invited student. Turning it OFF
+   blocks first-time OAuth account creation too; a public.invitations row does not create an Auth user.
+   Production: disable the **Email provider**, keep Google enabled and global signup ON;
+   `app_config.allowed_providers` stays `{google}`. Only the SQL membership allowlist grants app data access.
+   See [Supabase general configuration](https://supabase.com/docs/guides/auth/general-configuration).
 3. Auth → URL Configuration: Site URL = preview origin; Redirect URLs:
    `https://bimbing-ta-copilot.preview.emergentagent.com/**`, `http://localhost:5173/**`.
 
@@ -40,8 +46,26 @@ yarn test:hosted
 - Every asserted request uses the persona's own JWT from `POST /auth/v1/token?grant_type=password`.
 - Report sections: **AUTH**, **DATABASE**, **STORAGE**. Without config the suite reports `PENDING` and makes no connection.
 
+### Optional native SQL validation without admin credentials
+
+For an **empty dedicated dev project**, run the WHOLE file
+[`tests/hosted/rollback.sql`](../tests/hosted/rollback.sql) through the authenticated Supabase SQL Editor.
+It aborts if Auth users, memberships or projects already exist. It checks 40 native PostgreSQL
+assertions covering B/C RLS, column grants, naskah sealing, autosave conflicts, private drafts,
+comments, revision proof/owner decisions, notifications, safe URLs and export evidence protection.
+All synthetic rows and temporary helpers live inside one transaction that ends in `ROLLBACK`.
+No provider configuration is relaxed. After execution, verify counts for `auth.users`,
+`public.memberships`, `public.projects`, `public.versions` and the PDF bucket's Storage rows remain zero.
+If execution errors before the final rollback, issue `ROLLBACK` before the follow-up query.
+
+This is a separate layer: identity claims and Storage metadata are simulated in SQL.
+It does **not** validate Supabase-issued JWTs, PostgREST HTTP status, file transfer,
+Storage API behavior or actual Google OAuth. The HTTP suite and real login checklist still apply.
+
 ## 5. Real Google OAuth — manual checklist (synthetic sessions do NOT count)
-After step 4, rebuild the preview (`bash scripts/preview-emergent.sh`, Node 22) and use real Google accounts:
+After step 4, restore global **Allow new users to sign up = ON**, disable the Email provider,
+and confirm Google remains enabled. Then rebuild the preview
+(`bash scripts/preview-emergent.sh`, Node 22) and use real Google accounts:
 
 | # | Action | Expected |
 |---|---|---|
