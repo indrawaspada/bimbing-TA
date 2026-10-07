@@ -78,16 +78,14 @@ then restores Google-only policy during cleanup; see
 [HOSTED_SETUP.md](HOSTED_SETUP.md) and
 [Supabase general configuration](https://supabase.com/docs/guides/auth/general-configuration).
 
-## Still pending
+## Remaining acceptance work
 
-The 9 structure inspections and 40 native SQL checks are real hosted database results,
-not a complete hosted HTTP security acceptance suite. Supabase-issued persona JWTs,
-authenticated PostgREST behavior, Storage API uploads/downloads, browser cross-user flows, and
-application Google OAuth have not been tested on hosted Supabase.
-The `yarn test:hosted` suite has not been run in this Codex workspace; its DB URL
-and service-role configuration are unavailable here. No real owner account has
-been bootstrapped. Production hosting and checkpoint D AI integration remain
-pending.
+The hosted HTTP persona suite now passed **22/22** through GitHub Actions; see the
+executed results below. This Codex workspace still has no admin credential values.
+Real Google application login, browser cross-user flows on a hosted frontend,
+browser PDF extraction, real owner bootstrap, production hosting and checkpoint D
+AI integration remain pending. Synthetic password identities and RPC page text do
+not prove real OAuth or browser extraction.
 
 Follow [HOSTED_SETUP.md](HOSTED_SETUP.md): run synthetic hosted validation before
 bootstrapping the real owner, then complete the real Google login checklist and
@@ -96,7 +94,7 @@ blindly: inspect the recorded versions first.
 
 ## GitHub Actions preparation
 
-The manual hosted workflow has a default read-only preflight and an optional explicitly confirmed persona mode. The runner is pinned to this DEV ref, verifies the seven exact recorded migration SQL hashes and empty fixture baseline, supports legacy JWT and modern secret API-key headers, and fails on cleanup errors. Recovery only targets the current run, using a git-ignored journal. The full suite contains 22 cases including three checkpoint C HTTP/RPC flows. This preparation does not itself constitute an executed hosted HTTP result; successful preflight is not a persona/OAuth acceptance result. See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md).
+The manual hosted workflow has a default read-only preflight and an optional explicitly confirmed persona mode. The runner is pinned to this DEV ref, verifies the eight exact recorded migration SQL hashes and empty fixture baseline, supports legacy JWT and modern secret API-key headers, and fails on cleanup errors. Recovery only targets the current run, using a git-ignored journal. The full suite contains 22 cases including three checkpoint C HTTP/RPC flows. Full mode includes the guarded eighth conflict-code migration and a read-only cleanup verification. Preparation and successful preflight alone do not constitute persona/OAuth acceptance; see the executed run below. See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md).
 
 ## GitHub Actions read-only preflight: passed
 
@@ -113,5 +111,52 @@ Database access used a read-only transaction. No database, Storage, Auth-provide
 Admin values remained in GitHub Actions Secrets; none were retrieved into this workspace or published.
 
 The persona and recovery steps were deliberately skipped in default preflight mode.
-The 22 hosted persona cases, real Google application login, owner bootstrap and production hosting
-remain pending. A green preflight is not a complete hosted acceptance result.
+At that preflight run, the 22 persona cases were still pending. They subsequently passed below.
+Real Google login, owner bootstrap and production hosting remain pending.
+
+## Hosted HTTP persona validation: 22/22 passed
+
+Verified **2026-10-08 04:25:54 WIB** (2026-10-07 21:25:54 UTC).
+[Workflow run 37689118489](https://github.com/indrawaspada/bimbing-TA/actions/runs/37689118489),
+[job 113024468784](https://github.com/indrawaspada/bimbing-TA/actions/runs/37689118489/job/113024468784).
+Launcher `729b93f94ab369fa2896280da98edbfb34a95972` checked out reviewed source
+`bfdfd479d1c4d75b088833ada56c21e748b12258`. Dependency installation,
+TypeScript validation, frontend build, guarded conflict repair, preflight,
+22 persona cases, recovery and final read-only cleanup verification all passed.
+
+| Hosted suite | Result |
+| --- | --- |
+| Auth: Supabase-issued JWTs, unconfirmed email, provider restriction, spoofed metadata and tampered token | 5/5 |
+| Database: project isolation, grants/RLS, private notes, outsider/anon denial, owner decisions, CAS and rubric | 9/9 |
+| Storage API: bound PDF uploads, cross-user/unbound/overwrite denial, content type, signed URL/download isolation and deletion denial | 5/5 |
+| Checkpoint C RPC: sealed PDF, stale/sealed text denial, private draft CAS and revision evidence/owner closure/reopening | 3/3 |
+
+The initial full run [37687240188](https://github.com/indrawaspada/bimbing-TA/actions/runs/37687240188)
+passed 20/22: the stale PDF edit timed out at the `40001` business conflict,
+and revision submission then failed because its prerequisite PDF had not been sealed.
+Cleanup passed, and independent read-only run
+[37687996106](https://github.com/indrawaspada/bimbing-TA/actions/runs/37687996106)
+confirmed the empty Google-only DEV baseline at 04:15:16 WIB.
+
+The corrective migration `20261007000008_conflict_http409.sql` changes only the
+conflict SQLSTATE in `app.editable_version` and `public.finding_transition` to
+`PT409`. The seven historical migration files remain immutable; function access
+checks, security-definer settings and existing ACLs are preserved. This follows
+[Supabase's documented PostgREST retry issue](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b).
+The HTTP suite now asserts **409 / PT409 / edit_conflict**, rather than bypassing
+the stale-edit case. The revised source passed 27/27 disposable local SQL/serializer
+checks and the frontend build before the hosted rerun. All eight stored migration
+SQL hashes matched the reviewed source during the final hosted preflight.
+
+Seven synthetic users were created; the six confirmed personas obtained real
+Supabase Auth tokens, while the unconfirmed login was denied. All requests under
+test used the public key and the relevant persona JWT. Admin credentials stayed in
+GitHub Secrets and were used only for guarded repair, setup and cleanup.
+The temporary application Email allowance was restored to **Google only**.
+Cleanup passed at 04:25:49 WIB; final read-only preflight at 04:25:54 WIB verified
+**0 Auth users, 0 memberships, 0 projects, 0 invitations and 0 thesis PDF objects**.
+No real owner was activated; no reset, production deployment or AI call occurred.
+
+This verifies authenticated hosted APIs with synthetic personas and PDF/text
+fixtures. Real application Google OAuth, browser PDF extraction and deployed
+owner/student UI flows still require separate acceptance checks.
