@@ -3,20 +3,20 @@
 // Requests UNDER TEST always use persona JWTs obtained from Supabase Auth (password grant for synthetic
 // personas). The service-role key and DB URL are used ONLY for setup/teardown (create/delete synthetic users,
 // one-time owner bootstrap per README, temporary provider allowance) — never for the asserted requests.
-// Safety: aborts if a non-synthetic owner exists; deletes only rows created for bt-test-* personas.
+// Safety: explicit fixed DEV confirmation + empty-project preflight; cleans ONLY this run's personas.
+// On failure teardown fails the suite; CI has a separate always-run recovery step.
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
-import pg from 'pg';
+import { randomBytes, createHash } from 'node:crypto';
+import { DEV_REF, createPool, adminRequest, preflight, saveJournal, cleanupRun, isJwt } from '../../scripts/hosted-ci.mjs';
 import { loadConfig, describe as describeCfg, redact } from '../../scripts/lib/env.mjs';
 
 const cfg = loadConfig({ needAdmin: true });
-const RUN = Date.now().toString(36);
+const RUN = Date.now().toString(36) + '-' + randomBytes(6).toString('hex');
 const DOMAIN = 'example.test';
 const em = (n) => `bt-test-${n}-${RUN}@${DOMAIN}`;
 const pw = () => randomBytes(18).toString('base64url');
-const db = new pg.Pool({ connectionString: cfg.dbUrl, ssl: process.env.BT_DB_NO_SSL ? false : { rejectUnauthorized: false }, max: 3 });
-const isJwt = (k) => /^eyJ/.test(k || '');
+const db = createPool(cfg);
 const denied = (r) => r.status >= 400 && r.status < 500;
 const state = { users: {}, origProviders: null, projectIds: [], objectPaths: [] };
 console.log(`# hosted target ${describeCfg(cfg)} run=${RUN}`);
@@ -26,12 +26,11 @@ async function http(method, path, { token, body, headers = {}, raw } = {}) {
   if (token) h.Authorization = `Bearer ${token}`; else if (isJwt(cfg.anonKey)) h.Authorization = `Bearer ${cfg.anonKey}`;
   if (body !== undefined && !raw) h['Content-Type'] = 'application/json';
   if (!h.Prefer && path.startsWith('/rest/')) h.Prefer = 'return=representation';
-  const res = await fetch(cfg.url + path, { method, headers: h, body: raw ? body : body === undefined ? undefined : JSON.stringify(body) });
+  const res = await fetch(cfg.url + path, { method, headers: h, signal: AbortSignal.timeout(20000), body: raw ? body : body === undefined ? undefined : JSON.stringify(body) });
   const text = await res.text(); let json = null; try { json = text ? JSON.parse(text) : null; } catch { json = text; }
   return { status: res.status, json };
 }
-const admin = (method, path, body) => fetch(cfg.url + path, { method, headers: { apikey: cfg.serviceKey, Authorization: `Bearer ${cfg.serviceKey}`, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-  .then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
+const admin = (method, path, body) => adminRequest(cfg, method, path, body);
 const rest = (u, m, p, b) => http(m, `/rest/v1${p}`, { token: u?.token, body: b });
 
 async function createUser(key, { confirm = true, meta = {} } = {}) {
@@ -46,38 +45,20 @@ async function signIn(u) {
   return r;
 }
 
-async function cleanupSynthetic() {
-  const ids = (await db.query(`select id from auth.users where email like 'bt-test-%@${DOMAIN}'`)).rows.map((r) => r.id);
-  const projs = (await db.query(`select id from public.projects where owner_uid = any($1) or student_uid = any($1)`, [ids])).rows.map((r) => r.id);
-  for (const pid of projs) {
-    const objs = (await db.query(`select name from storage.objects where bucket_id='thesis-files' and name like $1`, [`${pid}/%`])).rows.map((r) => r.name);
-    if (objs.length) await admin('DELETE', '/storage/v1/object/thesis-files', { prefixes: objs });
-  }
-  if (projs.length) {
-    await db.query(`delete from public.findings where project_id = any($1)`, [projs]);
-    await db.query(`delete from public.ai_runs where project_id = any($1)`, [projs]);
-    await db.query(`delete from public.projects where id = any($1)`, [projs]);
-  }
-  await db.query(`delete from public.audit_events where actor_uid = any($1)`, [ids]);
-  for (const id of ids) await admin('DELETE', `/auth/v1/admin/users/${id}`);
-  await db.query(`delete from public.invitations where normalized_email like 'bt-test-%@${DOMAIN}'`);
-}
-
 before(async () => {
-  const realOwner = (await db.query(`select verified_email from public.memberships where role='owner' and verified_email not like 'bt-test-%'`)).rowCount;
-  if (realOwner) throw new Error('Proyek ini sudah memiliki owner non-sintetis. Jalankan suite persona pada proyek dev tanpa owner nyata (lihat docs/HOSTED_SETUP.md).');
-  await cleanupSynthetic();
-  state.origProviders = (await db.query(`select allowed_providers from public.app_config where id`)).rows[0].allowed_providers;
+  assert.equal(process.env.BT_HOSTED_CONFIRM_REF, DEV_REF, 'Set BT_HOSTED_CONFIRM_REF to explicitly authorize the empty DEV persona test');
+  const baseline = await preflight(cfg, db);
+  state.origProviders = baseline.providers;
+  saveJournal(RUN, baseline.providers);
+  state.journalCreated = true;
   for (const k of ['owner', 'a', 'b', 'outsider', 'emailonly']) await createUser(k);
   await createUser('spoofer', { meta: { role: 'owner', full_name: 'Spoofer' } });
   await createUser('unconfirmed', { confirm: false });
 });
 after(async () => {
-  try {
-    if (state.origProviders) await db.query(`update public.app_config set allowed_providers = $1 where id`, [state.origProviders]);
-    await cleanupSynthetic();
-  } catch (e) { console.error('teardown:', redact(e.message, cfg)); }
-  await db.end();
+  try { if (state.journalCreated) await cleanupRun(cfg, db); }
+  catch (e) { throw new Error('teardown failed: ' + redact(e.message, cfg)); }
+  finally { await db.end(); }
 });
 
 describe('AUTH (Supabase Auth hosted)', () => {
@@ -110,9 +91,13 @@ describe('AUTH (Supabase Auth hosted)', () => {
     const r = await http('GET', '/rest/v1/projects', { token: forged });
     assert.equal(r.status, 401);
   });
-  test('open email signup is disabled on this project (config check)', async () => {
-    const r = await http('POST', '/auth/v1/signup', { body: { email: em('signup'), password: pw() } });
-    assert.ok(denied(r), `signup -> ${r.status} (disable "Allow new users to sign up")`);
+  test('Auth settings preserve Google signup and verified-email requirement (read-only)', async () => {
+    const r = await http('GET', '/auth/v1/settings');
+    assert.equal(r.status, 200);
+    assert.equal(r.json.external.google, true);
+    assert.equal(r.json.external.email, true);
+    assert.equal(r.json.mailer_autoconfirm, false);
+    // Global signup affects first-time OAuth too; never change it or POST /signup here.
   });
 });
 
@@ -194,6 +179,7 @@ describe('STORAGE (Supabase Storage API hosted)', () => {
     const ctx = state.ctx;
     vA = (await rest(U().a, 'POST', '/versions', { project_id: ctx.pA.id, file_name: 'v1.pdf', file_size: pdf.length })).json[0];
     assert.equal(vA.file_path, `${ctx.pA.id}/${vA.id}.pdf`);
+    state.versionA = vA; state.pdf = pdf;
     const r = await up(U().a, vA.file_path); assert.ok(r.status === 200, `upload -> ${r.status} ${JSON.stringify(r.json)}`);
   });
   test('cross-student / unbound / overwrite uploads are denied', async () => {
@@ -218,5 +204,58 @@ describe('STORAGE (Supabase Storage API hosted)', () => {
   test('student cannot delete stored object', async () => {
     await http('DELETE', '/storage/v1/object/thesis-files', { token: U().a.token, body: { prefixes: [vA.file_path] } });
     assert.equal((await get(U().owner, vA.file_path)).status, 200, 'object still exists');
+  });
+});
+
+describe('CHECKPOINT C (authenticated PostgREST/RPC hosted)', () => {
+  const U = () => state.users;
+  const ok = (r) => {
+    assert.ok(r.status >= 200 && r.status < 300, `HTTP ${r.status}`);
+    return Array.isArray(r.json) ? r.json[0] : r.json;
+  };
+  const rpc = (u, name, args) => rest(u, 'POST', `/rpc/${name}`, args);
+  const rejected = (r, code, message) => {
+    assert.ok(r.status >= 400, `Expected rejection, got ${r.status}`);
+    assert.equal(r.json?.code, code);
+    assert.ok(r.json?.message?.includes(message), 'Unexpected rejection reason');
+  };
+  test('C01 uploaded PDF becomes sealed; cross-project RPC, stale edit and sealed text rejected', async () => {
+    let v = state.versionA;
+    const hash = createHash('sha256').update(state.pdf).digest('hex');
+    rejected(await rpc(U().b, 'version_upload_result', { p_version: v.id, p_expected: v.row_version, p_hash: hash }), '42501', 'not_found');
+    v = ok(await rpc(U().a, 'version_upload_result', { p_version: v.id, p_expected: v.row_version, p_hash: hash }));
+    const pages = [{ pdf_page: 1, printed_label: 'iv', text: 'Pendahuluan', source: 'pdfjs' },
+      { pdf_page: 2, printed_label: '1', text: 'Metode', source: 'pdfjs' }];
+    v = ok(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version, p_page_count: 2, p_pages: pages }));
+    rejected(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version - 1, p_page_count: 2, p_pages: pages }), '40001', 'edit_conflict');
+    v = ok(await rpc(U().a, 'version_save_ranges', { p_version: v.id, p_expected: v.row_version,
+      p_ranges: [{ chapter: 'B1', start_page: 1, end_page: 1 }, { chapter: 'B3', start_page: 2, end_page: 2 }] }));
+    v = ok(await rpc(U().a, 'version_confirm', { p_version: v.id, p_expected: v.row_version }));
+    assert.equal(v.status, 'confirmed'); assert.equal(v.file_hash, hash); assert.match(v.extraction_hash, /^[a-f0-9]{64}$/);
+    rejected(await rpc(U().a, 'version_save_pages', { p_version: v.id, p_expected: v.row_version, p_page_count: 2, p_pages: pages }), '42501', 'version_sealed');
+    state.versionA = v;
+  });
+  test('C02 private draft persists with CAS; owner cannot read it; B cannot write into A', async () => {
+    const d = ok(await rest(U().a, 'POST', '/workspace_drafts', { project_id: state.ctx.pA.id, scope: 'proof:hosted', payload: { text: 'autosaved' } }));
+    const filter = `/workspace_drafts?id=eq.${d.id}&row_version=eq.${d.row_version}`;
+    assert.equal((await rest(U().a, 'PATCH', filter, { payload: { text: 'new' } })).json.length, 1);
+    assert.deepEqual((await rest(U().a, 'PATCH', filter, { payload: { text: 'stale' } })).json, []);
+    assert.equal((await rest(U().a, 'GET', `/workspace_drafts?id=eq.${d.id}`)).json[0].payload.text, 'new');
+    assert.deepEqual((await rest(U().owner, 'GET', `/workspace_drafts?id=eq.${d.id}`)).json, []);
+    assert.ok(denied(await rest(U().b, 'POST', '/workspace_drafts', { project_id: state.ctx.pA.id, scope: 'proof:hosted', payload: {} })));
+  });
+  test('C03 revision evidence is bound to sealed PDF; only owner closes and reopening needs a reason', async () => {
+    let f = ok(await rpc(U().a, 'finding_transition', { p_finding: state.ctx.f.id, p_expected: state.ctx.f.row_version, p_status: 'in_progress' }));
+    f = ok(await rpc(U().a, 'finding_transition', { p_finding: f.id, p_expected: f.row_version, p_status: 'submitted',
+      p_proof: { version_id: state.versionA.id, start_page: 1, end_page: 2, description: 'Bukti revisi sintetis hosted' } }));
+    assert.equal(f.revision_proof.file_hash, state.versionA.file_hash);
+    rejected(await rpc(U().a, 'finding_transition', { p_finding: f.id, p_expected: f.row_version, p_status: 'verified_closed' }), '42501', 'owner_only');
+    f = ok(await rpc(U().owner, 'finding_transition', { p_finding: f.id, p_expected: f.row_version, p_status: 'verified_closed' }));
+    assert.equal(f.closed_by, U().owner.id);
+    rejected(await rpc(U().owner, 'finding_transition', { p_finding: f.id, p_expected: f.row_version, p_status: 'reopened' }), '22023', 'reopen_reason_required');
+    f = ok(await rpc(U().owner, 'finding_transition', { p_finding: f.id, p_expected: f.row_version, p_status: 'reopened', p_reason: 'Perbaiki penjelasan metode' }));
+    assert.equal(f.workflow_status, 'reopened');
+    const audit = ok(await rest(U().owner, 'GET', `/audit_events?project_id=eq.${state.ctx.pA.id}&action=eq.revision_transition&order=created_at.desc`));
+    assert.ok(audit);
   });
 });
