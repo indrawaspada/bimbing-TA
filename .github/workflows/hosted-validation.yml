@@ -34,7 +34,7 @@ jobs:
       - name: Checkout reviewed checkpoint C source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ba70d0979dcc97f1a7e591cae020fddc6bb828da
+          ref: da3f69fe94680521c9bb4df6691f47e0ce2a3fbe
           persist-credentials: false
       - name: Setup Node 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -85,7 +85,7 @@ jobs:
           const lines = [
             '# BimbingTA DEV validation',
             '',
-            'Reviewed source: `ba70d0979dcc97f1a7e591cae020fddc6bb828da`',
+            'Reviewed source: `da3f69fe94680521c9bb4df6691f47e0ce2a3fbe`',
             '',
             `Read-only preflight: ${process.env.PREFLIGHT_RESULT}`,
             `Persona suite: ${process.env.PERSONA_RESULT}`,
