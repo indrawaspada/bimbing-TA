@@ -81,7 +81,7 @@ begin
  v:=public.version_save_pages(v.id,v.row_version,2,'[{"pdf_page":1,"printed_label":"iv","text":"Pendahuluan","source":"pdfjs"},{"pdf_page":2,"printed_label":"1","text":"Metode","source":"pdfjs"}]');
  perform pg_temp.bt_denied('Chapter overlap rejected',format('select public.version_save_ranges(%L,%s,%L::jsonb)',v.id,v.row_version,'[{"chapter":"B1","start_page":1,"end_page":2},{"chapter":"B3","start_page":2,"end_page":2}]'),'22023','chapter_ranges_overlap');
  v:=public.version_save_ranges(v.id,v.row_version,'[{"chapter":"B1","start_page":1,"end_page":1},{"chapter":"B3","start_page":2,"end_page":2}]');
- perform pg_temp.bt_denied('Stale extraction rejected',format('select public.version_save_pages(%L,%s,2,%L::jsonb)',v.id,v.row_version-1,'[{"pdf_page":1,"text":"stale"}]'),'40001','edit_conflict');
+ perform pg_temp.bt_denied('Stale extraction rejected',format('select public.version_save_pages(%L,%s,2,%L::jsonb)',v.id,v.row_version-1,'[{"pdf_page":1,"text":"stale"}]'),'PT409','edit_conflict');
  v:=public.version_confirm(v.id,v.row_version);
  perform pg_temp.bt_check('Version sealed with hashes',v.status='confirmed' and v.extraction_hash~'^[a-f0-9]{64}$' and v.file_hash=repeat('a',64));
  perform pg_temp.bt_denied('Sealed text immutable',format('select public.version_save_pages(%L,%s,2,%L::jsonb)',v.id,v.row_version,'[{"pdf_page":1,"text":"tampered"}]'),'42501','version_sealed');
