@@ -34,7 +34,7 @@ jobs:
       - name: Checkout reviewed checkpoint C source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: da3f69fe94680521c9bb4df6691f47e0ce2a3fbe
+          ref: bfdfd479d1c4d75b088833ada56c21e748b12258
           persist-credentials: false
       - name: Setup Node 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -49,6 +49,15 @@ jobs:
           yarn install --frozen-lockfile --ignore-scripts --non-interactive
       - name: Typecheck and frontend build (public config only)
         run: yarn build
+      - name: Apply reviewed conflict HTTP 409 repair on empty DEV
+        id: repair
+        if: inputs.run_persona_tests
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BT_HOSTED_CONFIRM_REF: ${{ inputs.confirm_ref }}
+        run: node scripts/hosted-ci.mjs repair-conflict-code
       - name: Read-only hosted preflight
         id: preflight
         timeout-minutes: 3
@@ -73,9 +82,19 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/hosted-ci.mjs cleanup
+      - name: Verify empty DEV after persona cleanup (read-only)
+        id: postcheck
+        if: ${{ always() && inputs.run_persona_tests && steps.preflight.outcome == 'success' && steps.recovery.outcome == 'success' }}
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-ci.mjs preflight
       - name: Safe result summary
         if: always()
         env:
+          REPAIR_RESULT: ${{ steps.repair.outcome }}
+          POSTCHECK_RESULT: ${{ steps.postcheck.outcome }}
           PREFLIGHT_RESULT: ${{ steps.preflight.outcome }}
           PERSONA_RESULT: ${{ steps.personas.outcome }}
           RECOVERY_RESULT: ${{ steps.recovery.outcome }}
@@ -85,14 +104,16 @@ jobs:
           const lines = [
             '# BimbingTA DEV validation',
             '',
-            'Reviewed source: `da3f69fe94680521c9bb4df6691f47e0ce2a3fbe`',
+            'Reviewed source: `bfdfd479d1c4d75b088833ada56c21e748b12258`',
             '',
+            `Reviewed conflict repair: ${process.env.REPAIR_RESULT}`,
+            `Cleanup read-only verification: ${process.env.POSTCHECK_RESULT}`,
             `Read-only preflight: ${process.env.PREFLIGHT_RESULT}`,
             `Persona suite: ${process.env.PERSONA_RESULT}`,
             `Recovery: ${process.env.RECOVERY_RESULT}`,
             '',
             'Preflight success does not prove persona tests or real Google OAuth.',
-            'No migrations, reset, deployment or AI calls are part of this workflow.',
+            'Full mode applies only reviewed migration 20261007000008 on empty DEV. No reset, deployment or AI calls.',
             ''
           ];
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n'));
