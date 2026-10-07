@@ -92,3 +92,7 @@ Follow [HOSTED_SETUP.md](HOSTED_SETUP.md): run synthetic hosted validation befor
 bootstrapping the real owner, then complete the real Google login checklist and
 test owner/student flows on the deployed frontend. Do not reapply migrations
 blindly: inspect the recorded versions first.
+
+## GitHub Actions preparation
+
+The manual hosted workflow has a default read-only preflight and an optional explicitly confirmed persona mode. The runner is pinned to this DEV ref, verifies the seven exact recorded migration SQL hashes and empty fixture baseline, supports legacy JWT and modern secret API-key headers, and fails on cleanup errors. Recovery only targets the current run, using a git-ignored journal. The full suite contains 22 cases including three checkpoint C HTTP/RPC flows. This preparation does not itself constitute an executed hosted HTTP result; successful preflight is not a persona/OAuth acceptance result. See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md).
