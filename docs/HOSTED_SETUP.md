@@ -25,7 +25,7 @@ Scripts print only the project ref / DB host; errors pass through a redactor.
 3. Auth → URL Configuration: Site URL = preview origin; Redirect URLs:
    `https://bimbing-ta-copilot.preview.emergentagent.com/**`, `http://localhost:5173/**`.
 
-## 3. Apply pending migrations (seven files including checkpoint C) (no reset, no data deletion)
+## 3. Apply pending migrations (eight files including checkpoint C and conflict HTTP 409 fix) (no reset, no data deletion)
 ```
 node scripts/hosted-migrate.mjs                                   # dry run: lists applied/pending
 node scripts/hosted-migrate.mjs --apply --confirm-ref=<ref> --seed  # applies pending + seeds rubric/prompt/weights
@@ -91,4 +91,4 @@ Checkpoint C implementation and its hosted validation limits: [CHECKPOINT_C.md](
 
 ## 7. GitHub Actions (no local admin.env needed)
 
-See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md). The manual workflow consumes repository Secrets/Variables inside GitHub’s runner. Default mode runs read-only preflight. Full persona mode creates synthetic fixtures, temporarily allows `email` in the app membership policy, then restores Google-only and removes that run’s data. Neither mode changes global Auth settings, applies migrations, resets the database, deploys, or calls an AI model.
+See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md). The manual workflow consumes repository Secrets/Variables inside GitHub’s runner. Default mode runs read-only preflight. Full persona mode creates synthetic fixtures, temporarily allows `email` in the app membership policy, then restores Google-only and removes that run’s data. Full mode first applies only the reviewed additive conflict-code migration 20261007000008 on an empty DEV project (or verifies it is already exact), then validates all eight migration hashes. A final read-only preflight verifies cleanup even when a test fails. Neither mode changes global Auth settings, resets the database, deploys, or calls an AI model.
