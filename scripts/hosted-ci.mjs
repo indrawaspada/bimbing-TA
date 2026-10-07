@@ -56,7 +56,7 @@ export async function adminRequest(cfg, method, path, body) {
   return { status: response.status, json: await response.json().catch(() => null) };
 }
 
-export async function preflight(cfg, pool) {
+export async function preflight(cfg, pool, { allowPendingConflictFix = false } = {}) {
   validateTarget(cfg);
   const client = await pool.connect();
   try {
@@ -74,11 +74,12 @@ export async function preflight(cfg, pool) {
     assert.equal(tables.total, 27, 'Expected 27 migrated public tables');
     assert.equal(tables.unprotected, 0, 'All public tables must enable RLS');
     const applied = (await client.query('select version, statements from supabase_migrations.schema_migrations')).rows;
-    assert.equal(applied.length, 7, 'Expected exactly seven recorded migrations');
+    assert.ok(applied.length === 8 || (allowPendingConflictFix && applied.length === 7), 'Expected eight recorded migrations (seven only before the guarded conflict repair)');
     const directory = join(ROOT, 'supabase', 'migrations');
     const files = readdirSync(directory).filter((f) => /^\d{14}_.+\.sql$/.test(f)).sort();
-    assert.equal(files.length, 7);
+    assert.equal(files.length, 8);
     for (const file of files) {
+      if (allowPendingConflictFix && applied.length === 7 && file === '20261007000008_conflict_http409.sql') continue;
       const migration = applied.find((m) => m.version === file.slice(0, 14));
       assert.ok(migration && hash(migration.statements?.[0] || '') === hash(readFileSync(join(directory, file))), 'Migration SQL differs from the tested source');
     }
@@ -104,8 +105,32 @@ export async function preflight(cfg, pool) {
   const admin = await adminRequest(cfg, 'GET', '/auth/v1/admin/users?page=1&per_page=1');
   assert.equal(admin.status, 200, 'Admin key cannot read Auth users');
   assert.deepEqual(admin.json?.users, [], 'Auth API and database must both describe an empty DEV project');
-  console.log(`PREFLIGHT PASS: ${describe(cfg)}; empty DEV; 7 exact migrations; 27 RLS tables; private PDF bucket; 92 rubric rules; Auth/admin connectivity verified. No writes.`);
+  console.log(`PREFLIGHT PASS: ${describe(cfg)}; empty DEV; source-matched migrations; 27 RLS tables; private PDF bucket; 92 rubric rules; Auth/admin connectivity verified. No writes.`);
   return { providers: ['google'] };
+}
+
+// Apply only the reviewed, additive conflict-code patch on the empty fixed DEV target.
+// Never changes the historical migration SQL, provider policy, tables, or existing data.
+export async function repairConflictCode(cfg, pool) {
+  assert.equal(process.env.BT_HOSTED_CONFIRM_REF, DEV_REF, 'Explicit DEV confirmation is required for conflict repair');
+  await preflight(cfg, pool, { allowPendingConflictFix: true });
+  const file = '20261007000008_conflict_http409.sql';
+  const sql = readFileSync(join(ROOT, 'supabase', 'migrations', file), 'utf8');
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    await client.query("select pg_advisory_xact_lock(190746108)");
+    const applied = (await client.query('select statements from supabase_migrations.schema_migrations where version=$1', ['20261007000008'])).rows[0];
+    if (applied) assert.equal(hash(applied.statements?.[0] || ''), hash(sql), 'Recorded conflict patch differs from reviewed source');
+    else {
+      await client.query(sql);
+      await client.query('insert into supabase_migrations.schema_migrations (version,name,statements) values ($1,$2,$3)', ['20261007000008', 'conflict_http409', [sql]]);
+    }
+    await client.query('commit');
+    console.log('CONFLICT REPAIR PASS: reviewed migration 20261007000008 applied or already exact; no reset or data deletion.');
+  } catch (error) { await client.query('rollback'); throw error; }
+  finally { client.release(); }
+  await preflight(cfg, pool);
 }
 
 export function saveJournal(run, providers) {
@@ -151,8 +176,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     pool = createPool(cfg);
     const mode = process.argv[2] || 'preflight';
     if (mode === 'preflight') await preflight(cfg, pool);
+    else if (mode === 'repair-conflict-code') await repairConflictCode(cfg, pool);
     else if (mode === 'cleanup') await cleanupRun(cfg, pool);
-    else throw new Error('Supported modes: preflight, cleanup');
+    else throw new Error('Supported modes: preflight, repair-conflict-code, cleanup');
   } catch (error) {
     // Do not print assertion actual/expected fields: they may contain configuration values.
     console.error('HOSTED CI FAILED:', redact(error.message, cfg));
