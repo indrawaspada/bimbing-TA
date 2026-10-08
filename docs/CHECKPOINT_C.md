@@ -1,6 +1,6 @@
 # Checkpoint C — BimbingTA Copilot
 
-Implementasi dilanjutkan dari kode A/B; tidak memakai kredit Emergent. Tahap D (AI) belum dikerjakan.
+Implementasi dilanjutkan dari kode A/B; tidak memakai kredit Emergent. Tahap D (AI) sudah ditambahkan pada branch checkpoint-d; lihat CHECKPOINT_D.md untuk status validasi/aktivasi hosted.
 
 ## Fitur
 
