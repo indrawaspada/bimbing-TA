@@ -6,12 +6,16 @@ import http from "node:http";
 import { readFile, writeFile, mkdir, chmod } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomUUID, createHmac } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { brotliDecompressSync } from "node:zlib";
 import { chromium } from "playwright-core";
 import binary from "@sparticuz/chromium";
 import { db, rest } from "./sql-adapter.mjs";
+const localBrowser = process.env.BIMBINGTA_UI_BROWSER;
+if (!localBrowser && process.platform !== "linux")
+  throw new Error("Set BIMBINGTA_UI_BROWSER to an installed Chromium browser executable on this platform.");
 const exec = async (q, p) => db.query(q, p);
 const secret = "local-test-secret-not-for-production-000000";
 function token(id, email) {
@@ -80,7 +84,7 @@ async function as(who, fn) {
     throw e;
   }
 }
-const root = new URL("../../dist-harness/", import.meta.url).pathname;
+const root = fileURLToPath(new URL("../../dist-harness/", import.meta.url));
 const server = http.createServer(async (req, res) => {
   const body = await new Promise((resolve) => {
     const parts = [];
@@ -202,37 +206,39 @@ const build = spawnSync(
   },
 );
 if (build.status) throw new Error(build.stderr);
-const binBase = "node_modules/@sparticuz/chromium/bin/";
-if (
-  !existsSync("/tmp/chromium") ||
-  (await readFile("/tmp/chromium")).length < 1000
-) {
-  await writeFile(
-    "/tmp/chromium",
-    brotliDecompressSync(await readFile(binBase + "chromium.br")),
-  );
-  await chmod("/tmp/chromium", 0o700);
-}
-for (const name of ["fonts", "swiftshader"]) {
-  await writeFile(
-    `/tmp/${name}.tar`,
-    brotliDecompressSync(await readFile(binBase + name + ".tar.br")),
-  );
-  await mkdir(name === "fonts" ? "/tmp/fonts" : "/tmp", { recursive: true });
-  const r = spawnSync("tar", [
-    "--no-same-owner",
-    "-xf",
-    `/tmp/${name}.tar`,
-    "-C",
-    name === "fonts" ? "/tmp/fonts" : "/tmp",
-  ]);
-  if (r.status) throw new Error(r.stderr.toString());
+if (!localBrowser) {
+  const binBase = "node_modules/@sparticuz/chromium/bin/";
+  if (
+    !existsSync("/tmp/chromium") ||
+    (await readFile("/tmp/chromium")).length < 1000
+  ) {
+    await writeFile(
+      "/tmp/chromium",
+      brotliDecompressSync(await readFile(binBase + "chromium.br")),
+    );
+    await chmod("/tmp/chromium", 0o700);
+  }
+  for (const name of ["fonts", "swiftshader"]) {
+    await writeFile(
+      `/tmp/${name}.tar`,
+      brotliDecompressSync(await readFile(binBase + name + ".tar.br")),
+    );
+    await mkdir(name === "fonts" ? "/tmp/fonts" : "/tmp", { recursive: true });
+    const r = spawnSync("tar", [
+      "--no-same-owner",
+      "-xf",
+      `/tmp/${name}.tar`,
+      "-C",
+      name === "fonts" ? "/tmp/fonts" : "/tmp",
+    ]);
+    if (r.status) throw new Error(r.stderr.toString());
+  }
 }
 const browser = await chromium.launch({
-  executablePath: "/tmp/chromium",
+  executablePath: localBrowser || "/tmp/chromium",
   // Single-process Chromium shares session state across test contexts; use
   // separate renderer processes so owner and student remain distinct actors.
-  args: binary.args.filter((a) => !a.includes("disable-web-security") && a !== "--single-process"),
+  args: localBrowser ? [] : binary.args.filter((a) => !a.includes("disable-web-security") && a !== "--single-process"),
   headless: true,
 });
 const errors = [];
@@ -337,6 +343,35 @@ try {
   assert.equal(traceSaved[0].problem, "Masalah diperbarui");
   assert.equal(traceSaved[0].status, "draft");
   console.log("UI: traceability creation clears the new form; edits survive save, reload and a second-field edit");
+
+  const qaDir = join(root, "qa");
+  await mkdir(qaDir, { recursive: true });
+  for (const width of [1280, 390, 320]) {
+    await traceOwner.setViewportSize({ width, height: 900 });
+    const table = await traceOwner.locator("table").boundingBox();
+    const editor = await traceOwner.locator('td[colspan="5"]').boundingBox();
+    assert.ok(table && editor && Math.abs(table.width - editor.width) < 2,
+      "Traceability editor must span the full table width");
+    assert.equal(await traceOwner.evaluate(() =>
+      document.documentElement.scrollWidth <= window.innerWidth), true,
+      "Table overflow must stay inside its scroll container");
+    const form = await traceOwner.locator('td[colspan="5"] details > div').boundingBox();
+    assert.ok(form && form.x >= 0 && form.x + form.width <= width,
+      "Editor form must fit the viewport without horizontal scrolling");
+    if (width >= 768)
+      assert.ok(form.width >= table.width - 28,
+        "Desktop editor form must retain the full available table width");
+    for (const control of await traceOwner.locator('td[colspan="5"] input, td[colspan="5"] textarea, td[colspan="5"] select, td[colspan="5"] button').all()) {
+      const box = await control.boundingBox();
+      assert.ok(box && box.x >= 0 && box.x + box.width <= width,
+        "Editor inputs and save button must stay within the viewport");
+    }
+    assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+    await traceOwner.screenshot({
+      path: join(qaDir, `traceability-${width}.png`), fullPage: true,
+    });
+  }
+  console.log("UI: traceability editor spans the table at desktop/mobile widths; screenshots saved in dist-harness/qa");
 
   await traceOwner.close();
   page = await login(student, 390);

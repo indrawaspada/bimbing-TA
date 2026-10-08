@@ -1,6 +1,8 @@
 # Hosted validation through GitHub Actions
 
-The manual workflow **BimbingTA hosted validation** runs on GitHub's Ubuntu runner with Node 22 and Yarn 1.22.22. It checks out an exact reviewed checkpoint C commit, not a moving branch. The small launcher must exist on the default `main` branch for GitHub to show **Run workflow**; the application remains in the checkpoint C draft PR. No automatic push, pull-request or schedule trigger is configured.
+Historical checkpoint C workflow: its pinned source and preflight expect eight migrations and an empty DEV baseline. It does not validate checkpoint D and must not be run against the current nine-migration project with a real owner. See [CHECKPOINT_D.md](CHECKPOINT_D.md) for current status; the production main branch contains checkpoint C, while PR #2 for D remains draft according to the latest hosted record.
+
+The manual workflow **BimbingTA hosted validation** runs on GitHub's Ubuntu runner with Node 22 and Yarn 1.22.22. It checks out an exact reviewed checkpoint C commit, not a moving branch. The small launcher must exist on the default `main` branch for GitHub to show **Run workflow**. No automatic push, pull-request or schedule trigger is configured.
 
 ## Repository configuration
 

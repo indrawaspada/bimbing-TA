@@ -146,7 +146,9 @@ function Editor({
   const [err, setErr] = useState(""),
     [busy, setBusy] = useState(false);
   return (
-    <Card className="mt-2 min-w-[280px] space-y-3 p-3">
+    <Card
+      className={`mt-2 space-y-3 p-3 ${row ? "w-full max-w-[calc(100vw-3.5rem)] md:max-w-none" : ""}`}
+    >
       {err && <Alert tone="error">{err}</Alert>}
       {Object.entries(fields).map(([k, label]) => (
         <Field key={k} label={label}>

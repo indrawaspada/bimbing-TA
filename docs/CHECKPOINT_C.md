@@ -39,7 +39,7 @@ Menjalankan pengembangan ini tidak memakai kredit Emergent. Tahap C berjalan tan
 
 Migrasi baru: `supabase/migrations/20261006000007_workspace.sql`. Keenam migrasi sebelumnya tidak diubah. Runner otomatis mengambil file tertunda; jangan menjalankan reset atau mengulang migrasi yang sudah tercatat.
 
-Ikuti `docs/HOSTED_SETUP.md`. Kredensial admin hanya di environment server atau `.secrets/admin.env`, diabaikan Git. **Migrasi ini belum diterapkan oleh Codex ke Supabase Bapak.**
+Ikuti `docs/HOSTED_SETUP.md` untuk setup baru. Kredensial admin hanya di environment server atau `.secrets/admin.env`, diabaikan Git. Migrasi C sudah diterapkan dan diuji hosted; lihat hasil historis di `docs/HOSTED_STATUS.md`. Proyek dev kini memiliki sembilan migrasi dan owner nyata; status terbaru ada di `docs/CHECKPOINT_D.md`. Jangan menerapkan ulang atau mereset proyek tersebut.
 
 ```bash
 node scripts/hosted-migrate.mjs
@@ -51,14 +51,14 @@ Runner melakukan transaksi per migrasi dan berhenti jika ada kegagalan. Setelah 
 
 ## Validasi dan batasnya
 
-Lingkungan pengembangan C: Node **24.19.0**. Build TypeScript/Vite lolos; instalasi Yarn Classic dengan frozen lockfile juga lolos tanpa mengabaikan engine. Node 22 minimum tetap sesuai `.nvmrc`/engine, tetapi build C pada Node 22 belum diulang di lingkungan Codex ini.
+Lingkungan pengembangan C: Node **24.19.0**. Build TypeScript/Vite lolos; instalasi Yarn Classic dengan frozen lockfile juga lolos tanpa mengabaikan engine. Build hosted CI kemudian lolos pada Node **22.23.3**; lihat `docs/HOSTED_STATUS.md`.
 
 | Pemeriksaan | Hasil | Yang benar-benar diuji |
 | --- | --- | --- |
 | `yarn test:workspace` | **27/27 lolos** | PostgreSQL WASM (PGlite 0.5.8 / PostgreSQL 18.3), seluruh 7 migrasi dan seed. RLS, grants, trigger, RPC, isolasi A/B, workflow, konflik, kuota, snapshot, draft, ekspor/penghapusan; serializer CSV/HTML/ICS/HTTPS. |
 | `yarn test:score` | **4/4 lolos** | Kernel skor, 92 aturan toolkit dan bobot tidak berubah. |
 | `yarn test:ui:local` | **Lolos** | Chromium 153: PDF upload/worker/rentang/konfirmasi/reload di lebar 390 px, autosave/retry/diskusi, keputusan dosen, lifecycle revisi dengan versi baru, sumber HTTPS, CSV dan ZIP asli, polling berhenti saat thread ditutup. |
-| Supabase hosted | **Belum diuji pada C** | Auth Google asli, Storage API/S3 sebenarnya, PostgREST hosted, migrasi PostgreSQL hosted dan browser lain perlu validasi sebelum pemakaian nyata. |
+| Supabase hosted | **40/40 SQL dan 22/22 HTTP persona C lolos** | Hasil historis di `docs/HOSTED_STATUS.md`; persona sintetis bukan bukti Google OAuth atau ekstraksi browser. Login Google owner kemudian lolos pada preview D; alur mahasiswa nyata dan PDF hosted masih tertunda (`docs/CHECKPOINT_D.md`). |
 
 Harness portabel menjalankan SQL PostgreSQL asli tetapi **memetakan REST dan status HTTP secara sintetis**. Judul tes regresi B masih menyebut REST; pada `test:workspace` itu bukan permintaan ke PostgREST sungguhan. Auth dan Storage di tes browser juga sintetis. Tes ini membuktikan kode/SQL lokal, bukan integrasi hosted. Percobaan PostgREST melalui socket PGlite tidak dijadikan bukti karena penanganan error wire protocol tidak sesuai layanan sebenarnya.
 

@@ -1,5 +1,7 @@
 # Hosted validation (Supabase DEV project) — setup & checklist
 
+Scope: initial checkpoint C setup and synthetic validation on an empty dedicated DEV project. The current DEV project already has a real owner and nine migrations; do not repeat bootstrap, seed or the empty-DEV suite there. Current status and remaining acceptance are in [CHECKPOINT_D.md](CHECKPOINT_D.md). Google owner login has passed on the Cloudflare D preview; student flows remain pending. AI stays off until the owner explicitly authorizes activation and live tests.
+
 Runtime: **Node 22.x** (verified 22.23.3; `@supabase/*` 2.117.2 require `>=22`). Yarn 1 classic. No `--ignore-engines`.
 
 ## 1. Configuration files (never commit, never paste in chat)

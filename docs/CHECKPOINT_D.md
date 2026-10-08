@@ -27,10 +27,10 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 
 ## Aktivasi hosted (urutan untuk setup baru)
 
-Pada proyek dev saat ini langkah migrasi dan deployment fungsi sudah selesai; jangan menerapkan ulang atau mereset data. Langkah provider/model berikut masih tertunda dan memerlukan kesepakatan sebelum panggilan berbayar.
+Pada proyek dev saat ini langkah migrasi dan deployment fungsi sudah selesai; jangan menerapkan ulang atau mereset data. Urutan berikut adalah referensi setup baru atau upgrade dari C, bukan daftar yang perlu diulang pada dev saat ini. Langkah provider/model masih tertunda; AI tetap nonaktif sampai pengguna secara eksplisit mengizinkan aktivasi dan uji live.
 
 1. Simpan kode branch D, review, dan pertahankan main produksi sampai konfigurasi hosted siap. Backup data yang sudah ada; **jangan jalankan suite persona empty-DEV pada proyek yang kini memiliki akun pembimbing nyata**.
-2. Jalankan runner migrasi read-only `node scripts/hosted-migrate.mjs`. Delapan migrasi lama harus cocok dan hanya `20261008000009_ai_execution.sql` tertunda. Terapkan dengan `--apply --confirm-ref=tghcovjdsxirhpexpqor` tanpa reset dan tanpa reseed rubrik/bobot pengguna. Admin env hanya lokal/Secrets, bukan GitHub source.
+2. Jalankan runner migrasi read-only `node scripts/hosted-migrate.mjs`. Pada upgrade dari C, delapan migrasi lama harus cocok dan hanya `20261008000009_ai_execution.sql` tertunda. Pada dev saat ini, sembilan migrasi seharusnya cocok dan tidak ada yang tertunda. Terapkan hanya migrasi yang terbukti belum ada, dengan konfirmasi ref target, tanpa reset dan tanpa reseed rubrik/bobot pengguna. Admin env hanya lokal/Secrets, bukan GitHub source.
 3. Deploy fungsi dari direktori repo dengan Supabase CLI resmi yang sudah diautentikasi:
    ```sh
    supabase functions deploy ai --project-ref tghcovjdsxirhpexpqor
@@ -57,6 +57,22 @@ Reservasi memakai tarif input × max_input_tokens + tarif output × min(max_outp
 - `yarn test:score`: empat pemeriksaan kernel/bobot toolkit.
 
 UI lokal desktop/mobile diuji melalui `node tests/workspace/ui.mjs` dengan Auth/Storage tiruan dan SQL PostgreSQL WASM, termasuk PDF, revisi, pertemuan, sumber, ekspor dan regresi editor keterlacakan. Acceptance hosted terbatas pada daftar di bagian status hosted di atas. Hasil mocked provider tidak boleh diberi label live-tested. Runner hosted lama hanya menguji A/B/C; kelulusan historis 22/22 bukan kelulusan D. Checkpoint E adalah acceptance hosted lengkap, perbaikan blocker dan backup/restore, sesudah konfigurasi D tersedia.
+
+### Pemeriksaan lanjutan lokal — 9 Oktober 2026
+
+Basis revalidasi: branch `codex/checkpoint-d`, commit `faa5d1c`, ditambah perbaikan editor mobile dan portabilitas Windows. Windows, Node **24.15.0**, Yarn Classic **1.22.22**, Edge headless terpasang. Instalasi frozen lockfile selesai tanpa perubahan `yarn.lock` dan tanpa mengabaikan engine.
+
+- Build produksi (termasuk TypeScript frontend) dan `typecheck:edge` lulus; regresi workspace **27/27**, AI **14/14** dengan provider mock, dan skor **4/4** lulus.
+- Regresi UI lengkap lulus: simpan/reload/edit kolom lain mempertahankan catatan keterlacakan; PDF lokal, draft, diskusi, keputusan pertemuan, lifecycle revisi, sumber, CSV/ZIP dengan dua PDF, serta penghentian polling tetap lulus. Auth dan Storage seluruhnya sintetis, SQL PostgreSQL WASM disposable; ini bukan acceptance hosted.
+- Editor record memakai seluruh lebar tabel di desktop. Pada viewport mobile, formulir dibatasi ke lebar layar agar input dan tombol simpan tidak terpotong; tabel tetap dapat digulir horizontal. Pemeriksaan geometri pada **1280, 390 dan 320 px** dan inspeksi screenshot lulus. Screenshot lokal ada di `dist-harness/qa/traceability-{1280,390,320}.png` (git-ignored).
+- Harness UI menerima `BIMBINGTA_UI_BROWSER` untuk executable Chromium terpasang pada Windows/macOS; fallback Chromium Linux tetap tersedia. Path hasil build memakai `fileURLToPath`.
+- Pemeriksaan entrypoint seed diperbaiki untuk path Windows. `.gitattributes` menjaga LF pada rubrik, prompt, migrasi dan skrip SQL hosted yang di-hash. Byte sumber tersebut diperiksa identik dengan Git; hash rubrik/prompt kembali cocok dengan catatan historis. Tidak ada perubahan isi migrasi atau reseed database hosted.
+- Pemeriksaan HTTP read-only sebelum publikasi perbaikan mobile: HTML dan aset keterlacakan preview Cloudflare **200**. Aset `TraceabilityTab-tU_JEV-q.js` sudah memuat editor lintas lima kolom, tetapi saat itu belum memuat pembatas lebar mobile. Pemeriksaan aset bukan uji UI terautentikasi dan bukan bukti seluruh deployment identik dengan HEAD.
+- `.env.local` dan `.secrets/admin.env` tidak tersedia, serta tidak ada sesi browser hosted yang terhubung. Acceptance mahasiswa nyata, PDF hosted, ledger concurrency hosted, provider live dan restore tetap tertunda. AI tetap nonaktif; revalidasi lokal tidak menjalankan panggilan provider nyata atau migrasi hosted.
+
+Pembacaan [PR #2](https://github.com/indrawaspada/bimbing-TA/pull/2) pada 9 Oktober mengonfirmasi draft dari `codex/checkpoint-d` ke `main`, head `faa5d1c`, dengan pemeriksaan Cloudflare Pages sukses. Deskripsi PR mencatat uji hosted terdahulu: catatan keterlacakan bertahan sesudah simpan/reload dan muncul dalam metadata ekspor. Bukti tersebut merupakan laporan sesi sebelumnya, bukan pengujian ulang pada sesi Windows ini.
+
+Pekerjaan lanjutan: review perubahan lokal dan verifikasi editor setelah perubahan tersedia di preview; jalankan acceptance manual dengan akun pembimbing/mahasiswa nyata, PDF uji dan backup/restore proyek uji. Pengujian/aktivasi provider menunggu izin eksplisit pengguna. Gunakan data yang sudah ada dengan hati-hati; workflow empty-DEV historis tetap tidak sesuai untuk dev saat ini.
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 

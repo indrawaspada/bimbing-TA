@@ -29,7 +29,7 @@ src/                      frontend
 ## Runtime
 Node **22.x or 24.x** + Yarn Classic **1.22.22** (pinned in `packageManager`). C was verified on 24.19.0 locally and 22.23.3 in hosted CI. `@supabase/*` 2.117.2 declare `engines.node >=22`; install and build are
 verified with `yarn install --frozen-lockfile` **without** `--ignore-engines`. Cloudflare Pages: set `NODE_VERSION=22.23.3` and `YARN_VERSION=1.22.22` in Settings → Environment variables for Production (and Preview if used). `.nvmrc` also pins 22.23.3. Pages defaults to Yarn 4; using it with this Classic lockfile causes `YN0028`. Keep the existing lockfile and override the Yarn version, then retry deployment.
-The original Emergent workspace Node 22 lives at `/root/tools/node22/bin` (system Node 20 is not used for this project).
+Use a local Node installation meeting the engine requirement; the old Emergent workspace path is not required. Hosting remains Cloudflare Pages + Supabase.
 
 ## Configuration
 Frontend and admin config are separate files. Admin/test secrets: `.secrets/admin.env` (see `admin.env.example`,
@@ -67,7 +67,11 @@ yarn test:score             # scoring kernel (kit tests, score_reference.ts unch
 yarn test:hosted            # HOSTED dev project: AUTH / DATABASE / STORAGE sections; PENDING without config
 ```
 The local harness emulates Supabase roles/auth/storage; it is not Supabase itself. A run against the real
-dev project using synthetic persona JWTs passed 22/22; real Google login and hosted UI acceptance are still required before production use. See `docs/HOSTED_STATUS.md`.
+dev project using synthetic persona JWTs passed 22/22 for checkpoint C; see `docs/HOSTED_STATUS.md` for that historical run. Real Google owner login and some hosted UI flows subsequently passed on the D preview; student login, hosted PDF workflows and complete D acceptance remain pending. See `docs/CHECKPOINT_D.md` for current status.
+
+The UI harness uses bundled Chromium on Linux. On Windows/macOS set `BIMBINGTA_UI_BROWSER` to the executable path of an installed Chromium browser before running `yarn test:ui:local`. It uses disposable local SQL and synthetic Auth/Storage, never the hosted project. Traceability desktop/mobile screenshots are written to ignored `dist-harness/qa/`.
+
+Windows revalidation on 9 October 2026 passed the production build, Edge TypeScript, workspace 27/27, AI mocks 14/14, scoring 4/4 and the complete UI suite, including traceability at 1280/390/320 px. The mobile editor width fix is validated locally; see `docs/CHECKPOINT_D.md` for preview publication evidence and remaining hosted work. Hashed rubric/prompt/migration sources use LF via `.gitattributes` so Windows checkout preserves their original byte hashes.
 
 ## Build
 `yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).
