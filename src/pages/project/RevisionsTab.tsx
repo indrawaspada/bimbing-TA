@@ -30,7 +30,7 @@ export default function RevisionsTab({ project }: { project: any }) {
         workspace.rows("findings", project.id),
         workspace.rows("versions", project.id),
       ]);
-      setRows(f);
+      setRows(f.filter(x => x.approval_state === "accepted"));
       setVersions(v.filter((x) => x.status === "confirmed"));
     } catch (e: any) {
       setErr(e.message);
