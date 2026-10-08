@@ -3,7 +3,7 @@
 Private Indonesian thesis-supervision app: 1 supervisor (owner) + invited students.
 Stack: React + TypeScript + Vite + Tailwind + React Router · Supabase (Auth, Postgres + RLS, private Storage, Edge Functions) · Cloudflare Pages.
 
-Status: **Checkpoint D implemented and locally validated; hosted activation pending**. Chapter review/dialogue, model and budget settings, consent, draft decisions/scoring and manual traceability are available in code. AI stays off until keys, live model test and budget are configured. Checkpoint C previously passed hosted persona tests (22/22); eight hosted migrations are applied and the verified Google owner is active. Migration 0009/AI function, real UI acceptance and live provider validation remain pending. See [Checkpoint D setup](docs/CHECKPOINT_D.md) and [historical hosted results](docs/HOSTED_STATUS.md).
+Status: **Checkpoint D implemented; hosted acceptance in progress**. Nine migrations and the AI function are deployed to Supabase dev. Real Google owner login, authenticated AI status, project creation, manual traceability, two-session private-note conflict handling and metadata/ZIP export have been checked on the Cloudflare branch preview. AI remains off: provider keys, live model tests and budgets are not configured. Student login, hosted PDF workflows, AI ledger concurrency, provider calls and restore remain pending. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
 
 ## Layout
 ```
