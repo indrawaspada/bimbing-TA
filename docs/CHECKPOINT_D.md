@@ -9,7 +9,7 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 - Undangan mahasiswa dan proyek RAG pertama dibuat atas instruksi pembimbing, dengan lima milestone dan satu baris keterlacakan draft. Metadata JSON dan ZIP tanpa PDF berhasil diekspor; CRC serta hash manifest cocok.
 - Konflik catatan privat dari dua tab owner nyata ditolak pada sesi yang memakai versi lama. Muat versi terbaru berhasil; teks uji dikembalikan ke isi kosong semula.
 - Perbaikan editor mempertahankan nilai setelah mengubah record keterlacakan, revisi, pertemuan dan sumber; hanya formulir record baru yang direset. Regresi UI lokal membuktikan catatan tetap bertahan setelah simpan/reload dan edit kolom lain; uji tersebut memakai persona sintetis, bukan Supabase hosted.
-- Belum diuji: login/hak akses mahasiswa nyata, alur PDF hosted, konkurensi ledger AI hosted, provider live dan restore. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
+- Belum diuji hosted: login/hak akses mahasiswa nyata, alur PDF, konkurensi ledger AI, provider live dan restore. Rehearsal restore lokal untuk ZIP proyek manual tersedia dengan batas yang dijelaskan di bawah. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
 
 ## Yang tersedia
 
@@ -83,6 +83,27 @@ Commit implementasi `e240a7f13befe6eb3d6b3ecbcea2962d212aa7d5` (`Fix mobile trac
 - Publikasi hanya frontend preview melalui integrasi GitHub/Cloudflare. Tidak ada deployment Emergent, reset/reseed/migrasi Supabase, perubahan izin/model/budget, atau panggilan provider AI. AI tetap nonaktif.
 
 Pekerjaan lanjutan: review PR dan verifikasi tampilan editor pada sesi hosted terautentikasi; jalankan acceptance manual dengan akun pembimbing/mahasiswa nyata, PDF uji dan backup/restore proyek uji. Pengujian/aktivasi provider menunggu izin eksplisit pengguna. Gunakan data yang sudah ada dengan hati-hati; workflow empty-DEV historis tetap tidak sesuai untuk dev saat ini. Pemeriksaan aset dan build di atas tidak menutup acceptance hosted yang masih tertunda.
+
+## Rehearsal restore lokal — 9 Oktober 2026
+
+Bagian awal checkpoint E: `scripts/restore-backup.mjs` memeriksa ZIP hasil ekspor aplikasi dan menjalankan restore sementara ke PostgreSQL WASM baru di memori. Tidak ada koneksi hosted, pembacaan kredensial admin/provider, opsi apply, perubahan migrasi, atau penonaktifan trigger/RLS. Seluruh fixture di-rollback, diperiksa kosong, lalu database ditutup.
+
+```sh
+yarn test:restore
+node scripts/restore-backup.mjs backups/proyek-backup.zip --report=backups/restore-report.json
+```
+
+Folder laporan harus sudah ada dan nama file laporan harus belum dipakai; runner menolak overwrite. Input harus ZIP lengkap dengan metadata dan manifest, bukan Metadata JSON saja. Ukuran ZIP dan total hasil dekompresi dibatasi 128 MiB, metadata 64 MiB, PDF 25 MiB per file. Isi PDF diperlakukan sebagai byte; validasi hash bukan parsing/inspeksi visual atau pemindaian malware.
+
+- SHA-256 metadata dan setiap PDF diperiksa; path ZIP, duplikasi, ukuran, daftar file dan versi yang gagal upload divalidasi sebelum import. Tabel hanya boleh berada di proyek sumber. Snapshot halaman/bab terkunci dihitung ulang oleh SQL dan harus cocok.
+- Proyek, identitas mock owner/student, undangan mock, versi, halaman, rentang bab, revisi/bukti, komentar/balasan, pertemuan, sumber HTTPS, milestone dan keterlacakan dipetakan ke UUID baru. ID pengguna tidak boleh berasal dari ID versi/entitas lain; persetujuan/penutupan revisi tetap terikat ke owner. Locator dan bukti harus menunjuk versi serta halaman yang diekspor. Teks bebas tidak ditulis ulang.
+- File PDF disimpan dan diverifikasi sebagai byte di memori; metadata Storage lokal mengikuti path proyek/versi baru. Auth dan Storage bukan layanan Supabase nyata. Tanggal pembaruan dan counter optimistic lock mengikuti trigger target; timestamp konfirmasi dan snapshot sumber dipertahankan. Audit baru hanya menandai rehearsal, bukan merekonstruksi audit lama.
+- Scope yang didukung: ZIP proyek manual, termasuk proyek tanpa PDF/mahasiswa belum terhubung dan record upload gagal tanpa file. Histori AI (`ai_runs/messages/ratings`, temuan atau saran AI), lampiran sumber lama, nomor urut versi yang berlubang, serta upload ambigu belum didukung dan **ditolak**, tidak dilewati diam-diam.
+- Catatan privat, draf, akun/login/undangan asli, audit lama, consent, rubrik/bobot pengguna, model, budget dan ledger biaya tidak masuk scope restore. Rehearsal memakai seed toolkit lokal dan identitas `example.test` hanya untuk memeriksa skema/relasi. Ini bukan backup lengkap workspace atau prosedur pemulihan produksi.
+- **17/17 tes restore lulus**: relasi/proof/snapshot/rollback, data rusak, path/ukuran/duplikasi ZIP, scope proyek, jenis ID, locator, format C, proyek tanpa PDF, upload gagal, penolakan data tak didukung, CLI tanpa apply dan laporan tanpa overwrite/konten naskah.
+- Suite UI lengkap lulus dan ZIP yang benar-benar dibuat oleh aplikasi berhasil direhearsal: **2 PDF, 1 revisi, 1 komentar, 1 pertemuan, 1 sumber, 1 baris keterlacakan**. CLI juga lulus pada ZIP tersebut. Artefak sintetis lokal: `dist-harness/qa/workspace-backup.zip` dan `restore-report.json` (git-ignored). JSON laporan memuat `rollback_verified:true`, `hosted_tested:false`, `ai_enabled:false`, jumlah record/file dan batas, bukan konten naskah atau identitas sumber.
+
+B01/B02 lokal ini menambah bukti validasi, bukan kelulusan restore hosted. Acceptance mahasiswa/PDF nyata, restore maintenance ke Supabase uji, histori AI/ledger dan provider live tetap tertunda. AI tetap nonaktif. Untuk penulisan restore hosted kelak, target dan pemetaan pengguna harus eksplisit serta data lama tidak ditimpa; runner saat ini sengaja hanya menyediakan rehearsal lokal.
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 

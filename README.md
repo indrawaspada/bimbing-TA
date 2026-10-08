@@ -3,7 +3,7 @@
 Private Indonesian thesis-supervision app: 1 supervisor (owner) + invited students.
 Stack: React + TypeScript + Vite + Tailwind + React Router · Supabase (Auth, Postgres + RLS, private Storage, Edge Functions) · Cloudflare Pages.
 
-Status: **Checkpoint D implemented; hosted acceptance in progress**. Nine migrations and the AI function are deployed to Supabase dev. Real Google owner login, authenticated AI status, project creation, manual traceability, two-session private-note conflict handling and metadata/ZIP export have been checked on the Cloudflare branch preview. AI remains off: provider keys, live model tests and budgets are not configured. Student login, hosted PDF workflows, AI ledger concurrency, provider calls and restore remain pending. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
+Status: **Checkpoint D implemented; hosted acceptance in progress**. Nine migrations and the AI function are deployed to Supabase dev. Real Google owner login, authenticated AI status, project creation, manual traceability, two-session private-note conflict handling and metadata/ZIP export have been checked on the Cloudflare branch preview. AI remains off: provider keys, live model tests and budgets are not configured. Student login, hosted PDF workflows, AI ledger concurrency, provider calls and hosted restore remain pending; offline manual-backup rehearsal is available with the limits below. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
 
 ## Layout
 ```
@@ -61,6 +61,7 @@ yarn test:ai                # mock provider contracts + real SQL/WASM execution 
 yarn typecheck:edge         # server core/adapters/service TypeScript
 yarn test:workspace         # portable real SQL/WASM; synthetic HTTP/Auth/Storage adapter (27 checks)
 yarn test:ui:local          # Chromium UI + bundled PDF worker; synthetic Auth/Storage
+yarn test:restore           # manual ZIP integrity + disposable local SQL restore/rollback (17 checks)
 yarn test:workspace:rest    # native PostgreSQL + PostgREST regression; requires the B local stack
 yarn test:security:local    # LOCAL: fresh Postgres 15 + PostgREST emulation, 12 isolation tests
 yarn test:score             # scoring kernel (kit tests, score_reference.ts unchanged) + toolkit weights
@@ -72,6 +73,8 @@ dev project using synthetic persona JWTs passed 22/22 for checkpoint C; see `doc
 The UI harness uses bundled Chromium on Linux. On Windows/macOS set `BIMBINGTA_UI_BROWSER` to the executable path of an installed Chromium browser before running `yarn test:ui:local`. It uses disposable local SQL and synthetic Auth/Storage, never the hosted project. Traceability desktop/mobile screenshots are written to ignored `dist-harness/qa/`.
 
 Windows revalidation on 9 October 2026 passed the production build, Edge TypeScript, workspace 27/27, AI mocks 14/14, scoring 4/4 and the complete UI suite, including traceability at 1280/390/320 px. Commit `e240a7f` passed Cloudflare Pages and is published to the D branch preview; the mobile width rule and static SPA fallback were verified over HTTP. Authenticated hosted acceptance remains incomplete; see `docs/CHECKPOINT_D.md` for evidence and remaining work. Hashed rubric/prompt/migration sources use LF via `.gitattributes` so Windows checkout preserves their original byte hashes.
+
+Offline restore rehearsal is available through `node scripts/restore-backup.mjs <backup.zip> [--report=<new-report.json>]`. It validates the app's manual project ZIP and imports it into fresh in-memory PostgreSQL WASM, checks relinked records and file/snapshot hashes, then rolls back and closes the database. It has no hosted/apply mode, does not load credentials, and refuses AI history, legacy resource attachments, incomplete uploads and version sequence gaps. The report contains counts and limits, not thesis text or source identities. UI acceptance also rehearses the ZIP actually exported by the app; synthetic backup/report artifacts are in ignored `dist-harness/qa/`. This does not complete hosted restore acceptance or constitute a full workspace backup.
 
 ## Build
 `yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).

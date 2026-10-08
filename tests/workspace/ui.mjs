@@ -13,6 +13,7 @@ import { brotliDecompressSync } from "node:zlib";
 import { chromium } from "playwright-core";
 import binary from "@sparticuz/chromium";
 import { db, rest } from "./sql-adapter.mjs";
+import { rehearseBackup } from "../../scripts/lib/backup-restore.mjs";
 const localBrowser = process.env.BIMBINGTA_UI_BROWSER;
 if (!localBrowser && process.platform !== "linux")
   throw new Error("Set BIMBINGTA_UI_BROWSER to an installed Chromium browser executable on this platform.");
@@ -586,6 +587,15 @@ try {
   console.log(
     "UI: ZIP backup contains both original PDFs and authorized metadata manifest",
   );
+  const backupBytes = await readFile(await zip.path());
+  await mkdir(join(root, "qa"), { recursive: true });
+  await writeFile(join(root, "qa", "workspace-backup.zip"), backupBytes);
+  const restoreReport = await rehearseBackup(backupBytes);
+  assert.equal(restoreReport.passed, true);
+  assert.equal(restoreReport.pdf_files, 2);
+  assert.equal(restoreReport.rollback_verified, true);
+  await writeFile(join(root, "qa", "restore-report.json"), JSON.stringify(restoreReport, null, 2));
+  console.log("UI: actual exported ZIP restored into disposable SQL with both PDFs verified; rollback passed (not hosted)");
   // The discussion unmounted above. No polling should continue from that thread.
   const previous = polls;
   await new Promise((r) => setTimeout(r, 16000));

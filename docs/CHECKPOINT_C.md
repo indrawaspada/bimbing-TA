@@ -70,7 +70,7 @@ yarn test:workspace:rest
 
 Perintah tersebut membuat ulang **database uji lokal**; jangan arahkan ke database hosted atau data nyata. Ia memerlukan PostgreSQL 15 dan PostgREST seperti harness B. Belum dijalankan sampai tuntas untuk C dalam lingkungan Codex ini.
 
-Hash SHA-256 file dihitung browser lalu diperiksa kembali saat ekspor; server memvalidasi ukuran/path dan menghitung hash teks/snapshot SQL. Hash file bukan pemindaian malware atau pemeriksaan isi PDF oleh server. ZIP adalah backup proyek manual; restore terotomatisasi termasuk tahap E.
+Hash SHA-256 file dihitung browser lalu diperiksa kembali saat ekspor; server memvalidasi ukuran/path dan menghitung hash teks/snapshot SQL. Hash file bukan pemindaian malware atau pemeriksaan isi PDF oleh server. ZIP adalah backup proyek manual. Rehearsal restore ZIP manual ke SQL disposable kini tersedia melalui `scripts/restore-backup.mjs`; batas dan hasilnya ada di `CHECKPOINT_D.md`. Restore hosted/maintenance serta histori AI tetap pekerjaan tahap E.
 
 Tidak ada DOCX parser, hosting video, email, live chat, atau grup dalam tahap C.
 

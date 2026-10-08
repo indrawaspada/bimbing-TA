@@ -38,3 +38,9 @@ Fixtures: one verified owner, student A, student B, outsider, anonymous; two pro
 Scoring kernel tests: all full ratings→100; Not assessed reduces coverage not score; N/A excluded; no assessed dimensions→null score; invalid rating/weight raises; critical fails show despite high score. Frontend must not accept LLM-provided totals.
 
 A passing mock is not evidence that production credentials or all frontier models work. Record date, environment, cases, actual pass/fail, live-vs-mocked provider and remaining limits. Credit usage measured separately in Emergent dashboard.
+
+## B01/B02 local rehearsal — 9 October 2026
+
+`yarn test:restore`: **17/17 passed** on Windows/Node 24.15.0. Manual project ZIPs are validated and restored into fresh disposable PostgreSQL WASM with the nine real migrations and active guards/RLS. New IDs relink source versions, revision proof, comment replies and traceability locators. PDF bytes and sealed extraction hashes match; rollback leaves no project, Auth, Storage or audit fixtures. Corrupt/missing/unmanifested files, duplicate/unsafe ZIP paths, oversized entries, cross-project or incorrectly typed IDs, stale proof hashes, invalid locators and unsupported data are refused.
+
+The complete local UI suite also passed: its actual exported ZIP (two original PDFs, one revision, comment, meeting, resource and traceability row) passed `scripts/restore-backup.mjs`. Tests also cover a pending-student project without PDFs, failed uploads without inventing files, and older checkpoint C ZIPs. Auth/Storage remain synthetic; PDF bytes are checked in memory, not uploaded to Supabase. AI history, legacy resource attachments and version sequence gaps are unsupported and fail explicitly. There is no hosted/apply mode. B02 hosted restore remains **pending**; original audit, private notes, drafts, real identities and global AI configuration are outside this export scope. See `CHECKPOINT_D.md` for CLI use and limits.
