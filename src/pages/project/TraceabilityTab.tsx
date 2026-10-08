@@ -221,7 +221,9 @@ function Editor({
                 ...values,
                 project_id: project,
               });
-            await draft.reset();
+            // An edit's draft already contains the saved values. Resetting it
+            // here would restore the old record and persist stale values.
+            if (!row) await draft.reset();
             await reload();
           } catch (e: any) {
             setErr(e.message);
