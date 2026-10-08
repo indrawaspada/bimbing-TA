@@ -1,6 +1,15 @@
 # Checkpoint D — AI, rubrik dan keterlacakan
 
-Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau deployment Emergent. **Kode tahap D tersedia, tetapi migrasi 0009 dan Edge Function belum diterapkan ke Supabase hosted. Provider belum diuji live.** Status lokal tidak membuktikan Google OAuth, UI hosted, konkurensi PostgreSQL hosted, atau akses suatu model pada akun pengguna.
+Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau deployment Emergent. **Migrasi 0009 dan Edge Function sudah diterapkan ke Supabase dev; acceptance hosted tahap D belum lengkap. AI tetap nonaktif dan provider belum diuji live.** Hasil lokal di bawah tetap terpisah dari hasil hosted.
+
+## Status hosted — 9 Oktober 2026
+
+- Sembilan migrasi diterapkan; RLS dan ACL RPC service-only diperiksa. Fungsi memakai Auth getUser dan pemeriksaan membership/proyek; gateway legacy JWT nonaktif sesuai persetujuan pengguna.
+- Preview branch: https://codex-checkpoint-d.bimbing-ta.pages.dev/. Login Google pembimbing nyata, persistensi sesi, status AI terautentikasi (POST 200/OPTIONS 204), rubrik dan bobot diperiksa. Origin preview exact diizinkan; origin produksi belum diaktifkan untuk fungsi D.
+- Undangan mahasiswa dan proyek RAG pertama dibuat atas instruksi pembimbing, dengan lima milestone dan satu baris keterlacakan draft. Metadata JSON dan ZIP tanpa PDF berhasil diekspor; CRC serta hash manifest cocok.
+- Konflik catatan privat dari dua tab owner nyata ditolak pada sesi yang memakai versi lama. Muat versi terbaru berhasil; teks uji dikembalikan ke isi kosong semula.
+- Perbaikan editor mempertahankan nilai setelah mengubah record keterlacakan, revisi, pertemuan dan sumber; hanya formulir record baru yang direset. Regresi UI lokal membuktikan catatan tetap bertahan setelah simpan/reload dan edit kolom lain; uji tersebut memakai persona sintetis, bukan Supabase hosted.
+- Belum diuji: login/hak akses mahasiswa nyata, alur PDF hosted, konkurensi ledger AI hosted, provider live dan restore. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
 
 ## Yang tersedia
 
@@ -16,7 +25,9 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 - Keterlacakan manual dengan draf persisten dan optimistic lock. Saran AI disimpan sebagai ai_suggestion/draft dengan versi/lingkup sumber; hanya dosen memverifikasi. Export metadata mencakup AI dan keterlacakan yang diizinkan RLS.
 - Ekspor prompt dari teks/rubrik terpilih tetap berfungsi tanpa provider key. Impor hasil AI eksternal otomatis belum tersedia; pembimbing dapat mencatat revisi manual setelah memeriksa hasil eksternal.
 
-## Aktivasi hosted (urutan)
+## Aktivasi hosted (urutan untuk setup baru)
+
+Pada proyek dev saat ini langkah migrasi dan deployment fungsi sudah selesai; jangan menerapkan ulang atau mereset data. Langkah provider/model berikut masih tertunda dan memerlukan kesepakatan sebelum panggilan berbayar.
 
 1. Simpan kode branch D, review, dan pertahankan main produksi sampai konfigurasi hosted siap. Backup data yang sudah ada; **jangan jalankan suite persona empty-DEV pada proyek yang kini memiliki akun pembimbing nyata**.
 2. Jalankan runner migrasi read-only `node scripts/hosted-migrate.mjs`. Delapan migrasi lama harus cocok dan hanya `20261008000009_ai_execution.sql` tertunda. Terapkan dengan `--apply --confirm-ref=tghcovjdsxirhpexpqor` tanpa reset dan tanpa reseed rubrik/bobot pengguna. Admin env hanya lokal/Secrets, bukan GitHub source.
@@ -45,7 +56,7 @@ Reservasi memakai tarif input × max_input_tokens + tarif output × min(max_outp
 - `yarn test:workspace`: regresi 27 pemeriksaan A/B/C serta serializer menggunakan SQL/WASM.
 - `yarn test:score`: empat pemeriksaan kernel/bobot toolkit.
 
-UI desktop/mobile dan fungsi D di Supabase hosted belum diuji. Hasil mocked provider tidak boleh diberi label live-tested. Runner hosted lama hanya menguji A/B/C; kelulusan historis 22/22 bukan kelulusan D. Checkpoint E adalah acceptance hosted lengkap, perbaikan blocker dan backup/restore, sesudah konfigurasi D tersedia.
+UI lokal desktop/mobile diuji melalui `node tests/workspace/ui.mjs` dengan Auth/Storage tiruan dan SQL PostgreSQL WASM, termasuk PDF, revisi, pertemuan, sumber, ekspor dan regresi editor keterlacakan. Acceptance hosted terbatas pada daftar di bagian status hosted di atas. Hasil mocked provider tidak boleh diberi label live-tested. Runner hosted lama hanya menguji A/B/C; kelulusan historis 22/22 bukan kelulusan D. Checkpoint E adalah acceptance hosted lengkap, perbaikan blocker dan backup/restore, sesudah konfigurasi D tersedia.
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
