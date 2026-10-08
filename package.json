@@ -15,7 +15,9 @@
     "migrate:hosted": "node scripts/hosted-migrate.mjs",
     "test:workspace": "node scripts/test-workspace.mjs",
     "test:workspace:rest": "bash scripts/local-test-db.sh && node --test tests/security/rls.test.mjs && node --test tests/workspace/flows.test.mjs",
-    "test:ui:local": "node tests/workspace/ui.mjs"
+    "test:ui:local": "node tests/workspace/ui.mjs",
+    "test:ai": "node --experimental-strip-types --no-warnings --test --test-concurrency=1 tests/ai/*.test.mjs",
+    "typecheck:edge": "tsc -p tsconfig.edge.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

@@ -3,13 +3,13 @@
 Private Indonesian thesis-supervision app: 1 supervisor (owner) + invited students.
 Stack: React + TypeScript + Vite + Tailwind + React Router · Supabase (Auth, Postgres + RLS, private Storage, Edge Functions) · Cloudflare Pages.
 
-Status: **Checkpoint C implemented, with local checks and hosted persona tests passing (22/22)**. PDF versions, comments, revision proofs, meetings, links, notifications and exports are available. Eight hosted migrations are applied. Cloudflare deployment and real Google OAuth/UI acceptance remain pending; AI is checkpoint D. See [Checkpoint C guide](docs/CHECKPOINT_C.md) and [hosted results](docs/HOSTED_STATUS.md).
+Status: **Checkpoint D implemented and locally validated; hosted activation pending**. Chapter review/dialogue, model and budget settings, consent, draft decisions/scoring and manual traceability are available in code. AI stays off until keys, live model test and budget are configured. Checkpoint C previously passed hosted persona tests (22/22); eight hosted migrations are applied and the verified Google owner is active. Migration 0009/AI function, real UI acceptance and live provider validation remain pending. See [Checkpoint D setup](docs/CHECKPOINT_D.md) and [historical hosted results](docs/HOSTED_STATUS.md).
 
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files
 docs/                     SDD, data/API contract, acceptance tests (owner kit)
-supabase/migrations/      0001 identity … 0008 HTTP 409 conflicts (RLS deny-by-default, column grants, RPCs, storage policies)
+supabase/migrations/      0001 identity … 0009 AI ledger (RLS deny-by-default, column grants, RPCs, storage policies)
 supabase/tests/local/     TEST HARNESS ONLY: Supabase emulation (roles/auth/storage) for local Postgres
 scripts/seed-rubric.mjs   emits SQL that stores rule_engine.json + master prompt verbatim with sha256
 scripts/local-test-db.sh  TEST HARNESS: local Postgres 15 + PostgREST, applies migrations
@@ -57,6 +57,8 @@ Never put service_role keys, DB passwords or provider keys in `VITE_*`, the repo
 
 ## Tests
 ```
+yarn test:ai                # mock provider contracts + real SQL/WASM execution ledger
+yarn typecheck:edge         # server core/adapters/service TypeScript
 yarn test:workspace         # portable real SQL/WASM; synthetic HTTP/Auth/Storage adapter (27 checks)
 yarn test:ui:local          # Chromium UI + bundled PDF worker; synthetic Auth/Storage
 yarn test:workspace:rest    # native PostgreSQL + PostgREST regression; requires the B local stack
@@ -69,3 +71,5 @@ dev project using synthetic persona JWTs passed 22/22; real Google login and hos
 
 ## Build
 `yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).
+
+The older full hosted persona suite requires an empty disposable DEV project. Do not run it against the project now containing a real owner. Checkpoint D introduces no automatic provider calls or deployment. See docs/CHECKPOINT_D.md for ordered activation.
