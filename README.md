@@ -3,13 +3,13 @@
 Private Indonesian thesis-supervision app: 1 supervisor (owner) + invited students.
 Stack: React + TypeScript + Vite + Tailwind + React Router · Supabase (Auth, Postgres + RLS, private Storage, Edge Functions) · Cloudflare Pages.
 
-Status: **Checkpoint C implemented and locally validated**. PDF versions, comments, revision proofs, meetings, links, notifications and exports are available. Hosted migration/Google OAuth/Storage validation is still pending for C. AI is checkpoint D. See [Checkpoint C guide](docs/CHECKPOINT_C.md).
+Status: **Checkpoint C implemented, with local checks and hosted persona tests passing (22/22)**. PDF versions, comments, revision proofs, meetings, links, notifications and exports are available. Eight hosted migrations are applied. Cloudflare deployment and real Google OAuth/UI acceptance remain pending; AI is checkpoint D. See [Checkpoint C guide](docs/CHECKPOINT_C.md) and [hosted results](docs/HOSTED_STATUS.md).
 
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files
 docs/                     SDD, data/API contract, acceptance tests (owner kit)
-supabase/migrations/      0001 identity … 0007 workspace (RLS deny-by-default, column grants, RPCs, storage policies)
+supabase/migrations/      0001 identity … 0008 HTTP 409 conflicts (RLS deny-by-default, column grants, RPCs, storage policies)
 supabase/tests/local/     TEST HARNESS ONLY: Supabase emulation (roles/auth/storage) for local Postgres
 scripts/seed-rubric.mjs   emits SQL that stores rule_engine.json + master prompt verbatim with sha256
 scripts/local-test-db.sh  TEST HARNESS: local Postgres 15 + PostgREST, applies migrations
@@ -27,8 +27,8 @@ src/                      frontend
 - `private_notes` is a separate owner-only table.
 
 ## Runtime
-Node **22.x or 24.x** + Yarn Classic 1.22.22. B was verified on 22.23.3; C was verified on 24.19.0. `@supabase/*` 2.117.2 declare `engines.node >=22`; install and build are
-verified with `yarn install --frozen-lockfile` **without** `--ignore-engines`. Cloudflare Pages: `NODE_VERSION=22` (also `.nvmrc`).
+Node **22.x or 24.x** + Yarn Classic **1.22.22** (pinned in `packageManager`). C was verified on 24.19.0 locally and 22.23.3 in hosted CI. `@supabase/*` 2.117.2 declare `engines.node >=22`; install and build are
+verified with `yarn install --frozen-lockfile` **without** `--ignore-engines`. Cloudflare Pages: set `NODE_VERSION=22.23.3` and `YARN_VERSION=1.22.22` in Settings → Environment variables for Production (and Preview if used). `.nvmrc` also pins 22.23.3. Pages defaults to Yarn 4; using it with this Classic lockfile causes `YN0028`. Keep the existing lockfile and override the Yarn version, then retry deployment.
 The original Emergent workspace Node 22 lives at `/root/tools/node22/bin` (system Node 20 is not used for this project).
 
 ## Configuration
@@ -47,7 +47,7 @@ OPENAI_API_KEY  ANTHROPIC_API_KEY  GEMINI_API_KEY  ALLOWED_ORIGINS  AI_TIMEOUT_M
 Never put service_role keys, DB passwords or provider keys in `VITE_*`, the repo, chat or exports.
 
 ## Supabase setup (dev or prod project)
-1. Create project → Authentication → Providers → **Google**: enable, paste Google OAuth client ID/secret (Google Cloud Console → OAuth client "Web"; authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`). Disable Email signups in production.
+1. Create project → Authentication → Providers → **Google**: enable, paste Google OAuth client ID/secret (Google Cloud Console → OAuth client "Web"; authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`). Disable the Email provider in production; keep global signup enabled so invited first-time Google users can register. Application invitations and RLS control data access.
 2. Authentication → URL configuration: Site URL = production origin; Redirect URLs = `http://localhost:5173/**`, preview origin, `https://<your>.pages.dev/**`.
 3. Apply migrations + seed: `node scripts/hosted-migrate.mjs` (dry run), then `--apply --confirm-ref=<ref> --seed`
    (alternatives: `supabase db push`, or SQL editor in file order + `node scripts/seed-rubric.mjs > seed.sql`).
@@ -65,7 +65,7 @@ yarn test:score             # scoring kernel (kit tests, score_reference.ts unch
 yarn test:hosted            # HOSTED dev project: AUTH / DATABASE / STORAGE sections; PENDING without config
 ```
 The local harness emulates Supabase roles/auth/storage; it is not Supabase itself. A run against the real
-dev project (Google personas or service-role-created synthetic personas) is still required before production.
+dev project using synthetic persona JWTs passed 22/22; real Google login and hosted UI acceptance are still required before production use. See `docs/HOSTED_STATUS.md`.
 
 ## Build
-`yarn build` → `dist/` (Cloudflare Pages: build command `npm run build`, output `dist`, Node 22; `public/_redirects` gives SPA fallback).
+`yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).
