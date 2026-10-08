@@ -230,7 +230,9 @@ for (const name of ["fonts", "swiftshader"]) {
 }
 const browser = await chromium.launch({
   executablePath: "/tmp/chromium",
-  args: binary.args.filter((a) => !a.includes("disable-web-security")),
+  // Single-process Chromium shares session state across test contexts; use
+  // separate renderer processes so owner and student remain distinct actors.
+  args: binary.args.filter((a) => !a.includes("disable-web-security") && a !== "--single-process"),
   headless: true,
 });
 const errors = [];
@@ -305,6 +307,38 @@ function pdfFixture() {
   return Buffer.from(out);
 }
 try {
+  const traceOwner = await login(owner);
+  // Saving an existing record must retain the new values in its persisted
+  // editor draft, including after reload and a subsequent edit of another field.
+  await traceOwner.goto(`${url}/proyek/${project.id}/keterlacakan`);
+  await traceOwner.getByRole("button", { name: "Tambah keterlacakan", exact: true }).click();
+  await traceOwner.getByLabel("Tujuan", { exact: true }).fill("Tujuan awal");
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.getByRole("cell", { name: "T1 Tujuan awal", exact: true }).waitFor();
+  await traceOwner.waitForFunction(() => document.querySelector('input[maxlength="20"]')?.value === "T1" && [...document.querySelectorAll("textarea")].some(t => t.value === ""));
+  assert.equal(await traceOwner.getByLabel("Tujuan", { exact: true }).first().inputValue(), "");
+  await traceOwner.getByRole("button", { name: "Tambah keterlacakan", exact: true }).click();
+  await traceOwner.getByText("Ubah / verifikasi", { exact: true }).click();
+  const traceNote = "Periksa lingkup dan evaluasi pada bimbingan pertama";
+  await traceOwner.getByLabel(/^Catatan pembimbing/).fill(traceNote);
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.waitForFunction(() => [...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Simpan keterlacakan" && !b.disabled));
+  assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+  await traceOwner.reload();
+  await traceOwner.getByText("Ubah / verifikasi", { exact: true }).click();
+  await traceOwner.getByLabel(/^Catatan pembimbing/).waitFor();
+  assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+  await traceOwner.getByLabel("Masalah", { exact: true }).fill("Masalah diperbarui");
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.waitForFunction(() => [...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Simpan keterlacakan" && !b.disabled));
+  const traceSaved = (await exec("select * from traceability_rows where project_id=$1", [project.id])).rows;
+  assert.equal(traceSaved.length, 1);
+  assert.equal(traceSaved[0].owner_note, traceNote);
+  assert.equal(traceSaved[0].problem, "Masalah diperbarui");
+  assert.equal(traceSaved[0].status, "draft");
+  console.log("UI: traceability creation clears the new form; edits survive save, reload and a second-field edit");
+
+  await traceOwner.close();
   page = await login(student, 390);
   await page.goto(`${url}/proyek/${project.id}/naskah`);
   await page
@@ -490,6 +524,7 @@ try {
   await page.reload();
   await page.getByRole("link", { name: "https://example.test/demo" }).waitFor();
   console.log("UI: HTTPS demo resource persists after reload");
+
 
   await p.goto(`${url}/proyek/${project.id}/ekspor`);
   const csvPromise = p.waitForEvent("download");
