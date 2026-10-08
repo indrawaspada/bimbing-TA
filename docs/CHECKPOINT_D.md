@@ -72,7 +72,17 @@ Basis revalidasi: branch `codex/checkpoint-d`, commit `faa5d1c`, ditambah perbai
 
 Pembacaan [PR #2](https://github.com/indrawaspada/bimbing-TA/pull/2) pada 9 Oktober mengonfirmasi draft dari `codex/checkpoint-d` ke `main`, head `faa5d1c`, dengan pemeriksaan Cloudflare Pages sukses. Deskripsi PR mencatat uji hosted terdahulu: catatan keterlacakan bertahan sesudah simpan/reload dan muncul dalam metadata ekspor. Bukti tersebut merupakan laporan sesi sebelumnya, bukan pengujian ulang pada sesi Windows ini.
 
-Pekerjaan lanjutan: review perubahan lokal dan verifikasi editor setelah perubahan tersedia di preview; jalankan acceptance manual dengan akun pembimbing/mahasiswa nyata, PDF uji dan backup/restore proyek uji. Pengujian/aktivasi provider menunggu izin eksplisit pengguna. Gunakan data yang sudah ada dengan hati-hati; workflow empty-DEV historis tetap tidak sesuai untuk dev saat ini.
+### Publikasi preview — 9 Oktober 2026
+
+Commit implementasi `e240a7f13befe6eb3d6b3ecbcea2962d212aa7d5` (`Fix mobile traceability editor and Windows validation`) dipush ke `codex/checkpoint-d`. [Pemeriksaan Cloudflare Pages](https://dash.cloudflare.com/?to=/c6c9b2e1c1e03350d43b23942205ef7d/pages/view/bimbing-ta/60cbc0a1-1ec4-4b47-a17b-d1465f981091) **SUCCESS**, selesai **9 Oktober 2026 06:12:23 WIB** (8 Oktober 23:12:23 UTC).
+
+- Preview tetap https://codex-checkpoint-d.bimbing-ta.pages.dev/; HTML, JavaScript keterlacakan dan CSS merespons **200**.
+- HTML memuat `index-WatuRAFn.js`; aset `TraceabilityTab-B2yka3gI.js` memuat editor lintas lima kolom dan pembatas viewport mobile. CSS `index-DxI8wPzy.css` memuat aturan `max-width:calc(100vw - 3.5rem)`.
+- GET rute statis `/proyek/static-route-check/keterlacakan` mengembalikan **200** dan index yang sama. Ini membuktikan fallback routing Pages, bukan akses proyek, login atau RLS.
+- Deskripsi PR #2 diperbarui dengan perubahan dan validasi terbaru; PR tetap **open/draft** ke `main`. Main remote tetap `13a2551bd732bd061aa5432002ea7aa7694d83b6`, checkpoint C; tidak ada merge atau publikasi D ke produksi.
+- Publikasi hanya frontend preview melalui integrasi GitHub/Cloudflare. Tidak ada deployment Emergent, reset/reseed/migrasi Supabase, perubahan izin/model/budget, atau panggilan provider AI. AI tetap nonaktif.
+
+Pekerjaan lanjutan: review PR dan verifikasi tampilan editor pada sesi hosted terautentikasi; jalankan acceptance manual dengan akun pembimbing/mahasiswa nyata, PDF uji dan backup/restore proyek uji. Pengujian/aktivasi provider menunggu izin eksplisit pengguna. Gunakan data yang sudah ada dengan hati-hati; workflow empty-DEV historis tetap tidak sesuai untuk dev saat ini. Pemeriksaan aset dan build di atas tidak menutup acceptance hosted yang masih tertunda.
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 

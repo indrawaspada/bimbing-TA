@@ -71,7 +71,7 @@ dev project using synthetic persona JWTs passed 22/22 for checkpoint C; see `doc
 
 The UI harness uses bundled Chromium on Linux. On Windows/macOS set `BIMBINGTA_UI_BROWSER` to the executable path of an installed Chromium browser before running `yarn test:ui:local`. It uses disposable local SQL and synthetic Auth/Storage, never the hosted project. Traceability desktop/mobile screenshots are written to ignored `dist-harness/qa/`.
 
-Windows revalidation on 9 October 2026 passed the production build, Edge TypeScript, workspace 27/27, AI mocks 14/14, scoring 4/4 and the complete UI suite, including traceability at 1280/390/320 px. The mobile editor width fix is validated locally; see `docs/CHECKPOINT_D.md` for preview publication evidence and remaining hosted work. Hashed rubric/prompt/migration sources use LF via `.gitattributes` so Windows checkout preserves their original byte hashes.
+Windows revalidation on 9 October 2026 passed the production build, Edge TypeScript, workspace 27/27, AI mocks 14/14, scoring 4/4 and the complete UI suite, including traceability at 1280/390/320 px. Commit `e240a7f` passed Cloudflare Pages and is published to the D branch preview; the mobile width rule and static SPA fallback were verified over HTTP. Authenticated hosted acceptance remains incomplete; see `docs/CHECKPOINT_D.md` for evidence and remaining work. Hashed rubric/prompt/migration sources use LF via `.gitattributes` so Windows checkout preserves their original byte hashes.
 
 ## Build
 `yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).
