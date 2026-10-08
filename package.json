@@ -1,7 +1,7 @@
 {
   "name": "bimbingta-copilot",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,22 +11,30 @@
     "test:score": "node --experimental-strip-types --no-warnings --test 'tests/score/*.test.mjs'",
     "test:security:local": "bash scripts/local-test-db.sh && node --test 'tests/security/*.test.mjs'",
     "test:hosted": "node --test --test-concurrency=1 tests/hosted/hosted.test.mjs",
-    "migrate:hosted": "node scripts/hosted-migrate.mjs"
+    "migrate:hosted": "node scripts/hosted-migrate.mjs",
+    "test:workspace": "node scripts/test-workspace.mjs",
+    "test:workspace:rest": "bash scripts/local-test-db.sh && node --test tests/security/rls.test.mjs && node --test tests/workspace/flows.test.mjs",
+    "test:ui:local": "node tests/workspace/ui.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "clsx": "^2.1.1",
+    "fflate": "^0.8.3",
     "lucide-react": "^1.52.0",
+    "pdfjs-dist": "^6.4.299",
     "react": "^18",
     "react-dom": "^18",
     "react-router-dom": "^6"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@sparticuz/chromium": "^153.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@vitejs/plugin-react": "^4",
     "autoprefixer": "^10.6.1",
     "pg": "^8.23.1",
+    "playwright-core": "^1.63.0",
     "postcss": "^8.5.29",
     "tailwindcss": "^3",
     "typescript": "^5",

@@ -15,7 +15,9 @@ export function signJwt(claims) {
   return `${head}.${body}.${sig}`;
 }
 
+const adapter=process.env.TEST_SQL_WASM==='1'?await import('../workspace/sql-adapter.mjs'):null;
 export async function rest(token, method, path, body, prefer = 'return=representation') {
+  if(adapter)return adapter.rest(token,method,path,body,prefer);
   const headers = { 'Content-Type': 'application/json', Prefer: prefer };
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${REST}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -24,7 +26,7 @@ export async function rest(token, method, path, body, prefer = 'return=represent
   return { status: res.status, json };
 }
 
-export const pool = new pg.Pool({ connectionString: DB_URL, max: 4 });
+export const pool = adapter?.pool || new pg.Pool({ connectionString: DB_URL, max: 4 });
 export const sql = (q, p) => pool.query(q, p);
 
 // Run SQL as an API role with JWT claims (emulates Supabase Storage API executing under the caller's RLS)

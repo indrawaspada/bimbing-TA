@@ -223,7 +223,7 @@ test('S02/P03 storage + versions: path binding, quota, no cross-student upload/r
   const ownerRead = await asUser(owner, (c) => c.query(`select name from storage.objects where bucket_id = 'thesis-files' order by name`));
   assert.equal(ownerRead.out.rowCount, 2, 'owner reads both projects');
   const bucket = await sql(`select public, file_size_limit from storage.buckets where id = 'thesis-files'`);
-  assert.deepEqual(bucket.rows[0], { public: false, file_size_limit: '26214400' });
+  assert.equal(bucket.rows[0].public, false); assert.equal(Number(bucket.rows[0].file_size_limit), 26214400);
 });
 
 test('Rubric data stored verbatim (92 rules) with hash; snapshot immutable', async () => {

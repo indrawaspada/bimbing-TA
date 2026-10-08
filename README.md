@@ -3,13 +3,13 @@
 Private Indonesian thesis-supervision app: 1 supervisor (owner) + invited students.
 Stack: React + TypeScript + Vite + Tailwind + React Router · Supabase (Auth, Postgres + RLS, private Storage, Edge Functions) · Cloudflare Pages.
 
-Status: **Checkpoint B (foundation)**. Workspace (PDF/revisions/discussion), AI and export are later checkpoints.
+Status: **Checkpoint C implemented and locally validated**. PDF versions, comments, revision proofs, meetings, links, notifications and exports are available. Hosted migration/Google OAuth/Storage validation is still pending for C. AI is checkpoint D. See [Checkpoint C guide](docs/CHECKPOINT_C.md).
 
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files
 docs/                     SDD, data/API contract, acceptance tests (owner kit)
-supabase/migrations/      0001 identity … 0006 finalize (RLS deny-by-default, column grants, RPCs, storage policies)
+supabase/migrations/      0001 identity … 0007 workspace (RLS deny-by-default, column grants, RPCs, storage policies)
 supabase/tests/local/     TEST HARNESS ONLY: Supabase emulation (roles/auth/storage) for local Postgres
 scripts/seed-rubric.mjs   emits SQL that stores rule_engine.json + master prompt verbatim with sha256
 scripts/local-test-db.sh  TEST HARNESS: local Postgres 15 + PostgREST, applies migrations
@@ -27,9 +27,9 @@ src/                      frontend
 - `private_notes` is a separate owner-only table.
 
 ## Runtime
-Node **22.x** (verified 22.23.3) + Yarn 1. `@supabase/*` 2.117.2 declare `engines.node >=22`; install and build are
+Node **22.x or 24.x** + Yarn Classic 1.22.22. B was verified on 22.23.3; C was verified on 24.19.0. `@supabase/*` 2.117.2 declare `engines.node >=22`; install and build are
 verified with `yarn install --frozen-lockfile` **without** `--ignore-engines`. Cloudflare Pages: `NODE_VERSION=22` (also `.nvmrc`).
-In the Emergent workspace Node 22 lives at `/root/tools/node22/bin` (system Node 20 is not used for this project).
+The original Emergent workspace Node 22 lives at `/root/tools/node22/bin` (system Node 20 is not used for this project).
 
 ## Configuration
 Frontend and admin config are separate files. Admin/test secrets: `.secrets/admin.env` (see `admin.env.example`,
@@ -57,6 +57,9 @@ Never put service_role keys, DB passwords or provider keys in `VITE_*`, the repo
 
 ## Tests
 ```
+yarn test:workspace         # portable real SQL/WASM; synthetic HTTP/Auth/Storage adapter (27 checks)
+yarn test:ui:local          # Chromium UI + bundled PDF worker; synthetic Auth/Storage
+yarn test:workspace:rest    # native PostgreSQL + PostgREST regression; requires the B local stack
 yarn test:security:local    # LOCAL: fresh Postgres 15 + PostgREST emulation, 12 isolation tests
 yarn test:score             # scoring kernel (kit tests, score_reference.ts unchanged) + toolkit weights
 yarn test:hosted            # HOSTED dev project: AUTH / DATABASE / STORAGE sections; PENDING without config
