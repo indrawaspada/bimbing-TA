@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { workspace, type Row } from "@/lib/workspace";
 import { useAuth } from "@/lib/auth";
 import { useDraft } from "@/lib/drafts";
@@ -67,36 +67,42 @@ export default function TraceabilityTab({ project }: { project: any }) {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr className="border-b align-top" key={r.id}>
-                <td className="p-3">
-                  {r.objective_code}
-                  <p>{r.objective}</p>
-                </td>
-                <td className="p-3">{r.problem}</td>
-                <td className="p-3">
-                  {r.theory_locator?.note}
-                  <p>{r.method_locator?.note}</p>
-                </td>
-                <td className="p-3">
-                  {r.evaluation}
-                  <p>{r.result_locator?.note}</p>
-                  <p>{r.conclusion_locator?.note}</p>
-                </td>
-                <td className="p-3">
-                  <Badge>{r.status}</Badge>
-                  <details className="mt-2">
-                    <summary className="cursor-pointer">
-                      Ubah / verifikasi
-                    </summary>
-                    <Editor
-                      project={project.id}
-                      row={r}
-                      owner={isOwner}
-                      reload={load}
-                    />
-                  </details>
-                </td>
-              </tr>
+              <Fragment key={r.id}>
+                <tr className="align-top">
+                  <td className="p-3">
+                    {r.objective_code}
+                    <p>{r.objective}</p>
+                  </td>
+                  <td className="p-3">{r.problem}</td>
+                  <td className="p-3">
+                    {r.theory_locator?.note}
+                    <p>{r.method_locator?.note}</p>
+                  </td>
+                  <td className="p-3">
+                    {r.evaluation}
+                    <p>{r.result_locator?.note}</p>
+                    <p>{r.conclusion_locator?.note}</p>
+                  </td>
+                  <td className="p-3">
+                    <Badge>{r.status}</Badge>
+                  </td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-3 pb-3" colSpan={5}>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer">
+                        Ubah / verifikasi
+                      </summary>
+                      <Editor
+                        project={project.id}
+                        row={r}
+                        owner={isOwner}
+                        reload={load}
+                      />
+                    </details>
+                  </td>
+                </tr>
+              </Fragment>
             ))}
           </tbody>
         </table>
