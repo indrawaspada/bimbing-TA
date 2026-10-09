@@ -146,7 +146,18 @@ test('A05 native overlap: completed scope cache creates no second reservation or
   assert.equal(first.dispatch, false);
   assert.equal(second.value.dispatch, false);
   assert.equal(first.run.cached_from, original.run.id);
-  assert.equal(second.value.run.cached_from, original.run.id);
+  // The latest successful copy may itself be the cache source; follow to the root.
+  let cursor = second.value.run, hops = 0;
+  while (cursor.cached_from) {
+    assert.ok(++hops <= 2, 'cache chain must reach the original without cycling');
+    cursor = (await admin.query('select * from ai_runs where id=$1', [cursor.cached_from])).rows[0];
+    assert.ok(cursor);
+  }
+  assert.equal(cursor.id, original.run.id);
+  assert.deepEqual(first.run.normalized_result, original.run.normalized_result);
+  assert.deepEqual(second.value.run.normalized_result, original.run.normalized_result);
+  assert.equal(first.run.usage.new_cost_usd, 0);
+  assert.equal(second.value.run.usage.new_cost_usd, 0);
   assert.equal((await counts()).reservations, 1);
   assert.equal((await counts()).runs, 3);
   passedCases++;
