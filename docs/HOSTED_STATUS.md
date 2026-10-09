@@ -1,6 +1,6 @@
 # Supabase dev: migration and validation status
 
-This document preserves historical checkpoint C results from 7–8 October 2026. For the current ten-migration DEV project, real owner login, native D audit and partial authenticated acceptance, read [CHECKPOINT_D.md](CHECKPOINT_D.md). References below to an empty project, untested owner OAuth and the Emergent Auth URL describe the recorded inspection dates, not current configuration. The old empty-DEV persona suite must not be run on the current project containing a real owner.
+This document preserves historical checkpoint C results from 7–8 October 2026. For the current ten-migration DEV project, real owner login, native D audit, isolated ledger concurrency and 26/26 current-data Auth/PostgREST/Storage checks with synthetic students, read [CHECKPOINT_D.md](CHECKPOINT_D.md). References below to an empty project, untested owner OAuth and the Emergent Auth URL describe the recorded inspection dates, not current configuration. The old empty-DEV persona suite must not be run on the current project containing a real owner.
 
 Verified: **2026-10-07 18:44:53 WIB** (11:44:53 UTC).
 Project: **bimbingTA-dev**, `tghcovjdsxirhpexpqor`; PostgreSQL 17.11.

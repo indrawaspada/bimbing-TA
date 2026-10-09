@@ -37,9 +37,11 @@ Fixtures: one verified owner, student A, student B, outsider, anonymous; two pro
 
 Scoring kernel tests: all full ratings→100; Not assessed reduces coverage not score; N/A excluded; no assessed dimensions→null score; invalid rating/weight raises; critical fails show despite high score. Frontend must not accept LLM-provided totals.
 
-A passing mock is not evidence that production credentials or all frontier models work. Record date, environment, cases, actual pass/fail, live-vs-mocked provider and remaining limits. Credit usage measured separately in Emergent dashboard.
+A passing mock is not evidence that production credentials or all frontier models work. Record date, environment, cases, actual pass/fail, live-vs-mocked provider and remaining limits. Live provider usage/cost is recorded only after explicit owner permission; this project uses Cloudflare Pages + Supabase, without Emergent deployment or credits.
 
 ## B01/B02 local rehearsal — 9 October 2026
+
+This section records offline/SQL evidence. The newer current-data Auth/PostgREST/Storage run below now supplies 26/26 synthetic native service checks; general operator/production recovery and Google/browser acceptance remain pending.
 
 `yarn test:restore`: **28/28 passed** on Windows/Node 24.15.0 (initial runner: 17/17; offline cases: 22/22). Manual project ZIPs are validated and restored into fresh disposable PostgreSQL WASM with all source migrations and active guards/RLS. New IDs relink source versions, revision proof, comment replies and traceability locators. PDF bytes and sealed extraction hashes match; rollback leaves no project, Auth, Storage or audit fixtures. Corrupt/missing/unmanifested files, duplicate/unsafe ZIP paths, oversized entries, cross-project or incorrectly typed IDs, stale proof hashes, invalid locators and unsupported data are refused.
 
@@ -49,8 +51,12 @@ Six additional tests cover a nonempty target with existing owner/project/private
 
 ## Native ledger concurrency in isolated CI — 9 October 2026
 
-## Current-data file service rehearsal preparation
-
-`yarn test:file:qa`: **9/9 local tests passed** on a nonempty disposable SQL target with original owner/project/private notes, simulated Auth/Storage transport and actual RLS. Runner preparation for 26 real Auth/PostgREST/Storage checks includes admin-created password identities, explicitly fixture-enrolled students, original Google-only claim restriction, source ZIP hash verification, genuine issued JWT/public-key requests, signed URL host/path binding, relinked manual proof/replies/pages, cross-user denial and exact-scope cleanup with 31 original table counts/content hashes. Original-project/user journal substitution, partial-transfer/cleanup failure and retry are covered. Actual hosted pass must be recorded in `CHECKPOINT_D.md` after Actions; local transport fixtures alone do not pass B02 APIs or Google/browser acceptance.
-
 `yarn test:ledger:native` requires a fresh dedicated localhost PostgreSQL 17 database in `BT_NATIVE_LEDGER_DB_URL`, never Supabase env. [Run 37877916874](https://github.com/indrawaspada/bimbing-TA/actions/runs/37877916874), source `f4023bd`, **11/11 passed** at **03:09:30 UTC**, PostgreSQL 17.11: nine database cases with actual distinct backend connections and **seven observed budget-lock waits**, plus two target/initialization safeguards. A03/A04/A05 and A01/ACL now have this native SQL evidence: one committed idempotent claim/reservation, atomic monthly cost/count caps, single active project run, rollback, cache provenance and no fresh dispatch/reservation, conflicting idempotency scope, disabled budget and service-only RPCs. No provider callback is executed and no production/dev AI setting is changed. This is separate from PGlite/mock tests and Supabase Edge/HTTP/live acceptance; A03 does not yet prove a live provider call path. See `CHECKPOINT_D.md` for exact environment and remaining acceptance.
+
+## Current-data file service rehearsal — 9 October 2026
+
+`yarn test:file:qa`: **9/9 local tests passed** on a nonempty disposable SQL target with original owner/project/private notes, simulated Auth/Storage transport and actual RLS. Original-project/user journal substitution, fixture ZIP changes, partial-transfer/cleanup failure and retry are covered.
+
+[Run 37880731555](https://github.com/indrawaspada/bimbing-TA/actions/runs/37880731555), source `c356258`, **26/26 hosted checks passed** at **03:47:39 UTC** on documented DEV. Three admin-confirmed password identities received actual Supabase JWTs; two memberships were explicitly SQL-enrolled fixtures, not Google claims. Original Google-only policy still refused the invited email outsider. Asserted PostgREST/Storage/Edge requests used public key + relevant student JWT, never admin key. Two opaque synthetic PDF files (**94 bytes**) transferred through real upload/download/signed URL APIs with matching hashes and relinked versions/proof/replies/pages. Cross-user/anon/private-note/role/owner/overwrite denials passed. Student Edge status returned no provider configuration or provider action.
+
+Recovery scope was artifacted before mutation. All committed Auth/project/Storage/record fixtures were removed, and **31 original table counts/content hashes matched exactly**. No owner session, migration, seed, provider/Auth setting change or AI activation occurred. This is native service-layer S01–S07 and manual B02 evidence; source is a synthetic ZIP, fixture membership bypasses first-time OAuth, file bytes are not parsed/rendered, and no operator ZIP or persistent production recovery is supported by this runner. Google student/browser PDF and full maintenance/production acceptance remain separate.

@@ -7,7 +7,9 @@ Status: **Checkpoint D implemented; hosted acceptance in progress**. Ten migrati
 
 Real Google owner login, authenticated AI status, project creation, manual traceability, two-session private-note conflict handling and metadata/ZIP export have been checked on the Cloudflare branch preview. Native SQL restore rollback passed [2/2 hosted scenarios](https://github.com/indrawaspada/bimbing-TA/actions/runs/37875028465) with synthetic ZIPs, SQL role/Storage RLS and unchanged 31 original tables. Isolated PostgreSQL 17.11 ledger concurrency passed [11/11 tests](https://github.com/indrawaspada/bimbing-TA/actions/runs/37877916874), including seven observed multi-connection lock waits, idempotency, monthly cost/count caps, rollback and cache. No provider calls or Supabase AI activation occurred.
 
-Student login, hosted PDF workflows, concurrency through Supabase/Edge, provider calls and full file-service restore remain pending. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
+Current-data Auth/PostgREST/Storage rehearsal passed [26/26 hosted checks](https://github.com/indrawaspada/bimbing-TA/actions/runs/37880731555): real issued password JWTs/public-key requests, verified upload/download/signed URL hashes, restored manual proof/replies/pages, cross-user/anonymous/private-note/role denials and student Edge status. Temporary synthetic users/projects/files were removed; 31 original table counts/content hashes matched exactly. Google-only policy and AI OFF remained unchanged. These are explicitly SQL-enrolled synthetic students and opaque file bytes, not Google login or browser PDF extraction.
+
+Real Google student/browser PDF workflows, concurrency through Supabase/Edge, provider calls and general maintenance/production restore remain pending. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
 
 ## Layout
 ```
