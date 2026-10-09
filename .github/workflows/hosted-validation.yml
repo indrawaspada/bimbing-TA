@@ -1,5 +1,5 @@
 name: BimbingTA hosted validation
-run-name: BimbingTA DEV - ${{ inputs.run_persona_tests && 'persona tests' || 'read-only preflight' }}
+run-name: BimbingTA DEV - ${{ inputs.run_file_service_rehearsal && 'synthetic file services and cleanup' || inputs.run_native_ledger_tests && 'isolated native ledger and audit' || inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
 
 on:
   workflow_dispatch:
@@ -14,6 +14,26 @@ on:
         type: string
         required: true
         default: tghcovjdsxirhpexpqor
+      apply_rubric_guard_repair:
+        description: 'D branch only: apply additive 00010 rubric/prompt guard repair after read-only audit; no reseed or user-data updates'
+        type: boolean
+        required: false
+        default: false
+      run_restore_sql_rehearsal:
+        description: 'D only: synthetic restore SQL in DEV transaction, reuse existing owner; always rollback; no API/provider calls'
+        type: boolean
+        required: false
+        default: false
+      run_native_ledger_tests:
+        description: 'D only: native PG17 ledger concurrency in disposable localhost database; no Supabase secrets/provider calls'
+        type: boolean
+        required: false
+        default: false
+      run_file_service_rehearsal:
+        description: 'D only: temporary synthetic Auth students/projects/PDFs on current DEV; exact-scope cleanup; no Google-only/AI setting changes'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -23,6 +43,137 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  isolated_native_ledger:
+    if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d' && inputs.run_native_ledger_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_DB: bimbingta_ledger_test
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout exact dispatched D source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without lifecycle scripts
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --ignore-scripts --non-interactive
+      - name: Native ledger with observed multi-connection lock waits
+        timeout-minutes: 3
+        env:
+          BT_NATIVE_LEDGER_DB_URL: postgresql://postgres:ci-only-password@127.0.0.1:5432/bimbingta_ledger_test
+        run: yarn test:ledger:native
+  checkpoint_d_audit:
+    if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.run_file_service_rehearsal && 35 || 20 }}
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Refuse legacy personas and require exact DEV confirmation
+        env:
+          PERSONAS: ${{ inputs.run_persona_tests }}
+          CONFIRM_REF: ${{ inputs.confirm_ref }}
+        run: |
+          test "$PERSONAS" = 'false'
+          test "$CONFIRM_REF" = 'tghcovjdsxirhpexpqor'
+      - name: Checkout exact dispatched checkpoint D source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without lifecycle scripts
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --ignore-scripts --non-interactive
+      - name: Typecheck, build and local audit safety tests
+        run: |
+          yarn build
+          yarn typecheck:edge
+          node --test --test-concurrency=1 tests/hosted-audit/*.test.mjs
+          node --test --test-concurrency=1 tests/restore/hosted-rollback.test.mjs
+          node --test --test-concurrency=1 tests/file-qa/*.test.mjs
+      - name: Audit before explicitly selected rubric guard repair
+        if: inputs.apply_rubric_guard_repair
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-audit.mjs --allow-pending-rubric-repair
+      - name: Apply only reviewed additive rubric guard repair
+        if: inputs.apply_rubric_guard_repair
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-migrate.mjs --apply --confirm-ref=tghcovjdsxirhpexpqor --only=20261009000010
+      - name: Read-only audit of existing DEV data
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-audit.mjs
+      - name: Synthetic restore SQL rehearsal with verified rollback
+        if: inputs.run_restore_sql_rehearsal
+        timeout-minutes: 4
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-restore-rehearsal.mjs --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Prepare exact-scope file QA recovery journal (no hosted writes)
+        id: file_prepare
+        if: inputs.run_file_service_rehearsal
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs prepare --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Preserve non-secret recovery scope before creating fixtures
+        id: file_journal
+        if: inputs.run_file_service_rehearsal
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: file-qa-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .secrets/hosted-file-qa.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Real Auth/PostgREST/Storage file rehearsal and cleanup
+        id: file_run
+        if: inputs.run_file_service_rehearsal
+        timeout-minutes: 6
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs run --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Recover only this file QA scope and verify original data
+        if: ${{ always() && inputs.run_file_service_rehearsal && steps.file_prepare.outcome == 'success' }}
+        timeout-minutes: 4
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs cleanup --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
   validate:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

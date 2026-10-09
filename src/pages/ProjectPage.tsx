@@ -15,6 +15,8 @@ const RevisionsTab = lazy(() => import("./project/RevisionsTab"));
 const DiscussionTab = lazy(() => import("./project/DiscussionTab"));
 const MeetingsTab = lazy(() => import("./project/MeetingsTab"));
 const ResourcesTab = lazy(() => import("./project/ResourcesTab"));
+const AITab = lazy(() => import("./project/AITab"));
+const TraceabilityTab = lazy(() => import("./project/TraceabilityTab"));
 const ExportsTab = lazy(() => import("./project/ExportsTab"));
 
 const TABS = [
@@ -25,6 +27,8 @@ const TABS = [
   { key: "target", label: "Target" },
   { key: "pertemuan", label: "Pertemuan" },
   { key: "sumber", label: "Sumber & demo" },
+  { key: "ai", label: "Asisten AI" },
+  { key: "keterlacakan", label: "Keterlacakan" },
   { key: "ekspor", label: "Ekspor" },
   { key: "catatan", label: "Catatan privat", ownerOnly: true },
 ];
@@ -164,6 +168,8 @@ export default function ProjectPage() {
         {active === "diskusi" && <DiscussionTab projectId={project.id} />}
         {active === "pertemuan" && <MeetingsTab project={project} />}
         {active === "sumber" && <ResourcesTab projectId={project.id} />}
+        {active === "ai" && <AITab project={project} />}
+        {active === "keterlacakan" && <TraceabilityTab project={project} />}
         {active === "ekspor" && <ExportsTab project={project} />}
       </Suspense>
     </div>

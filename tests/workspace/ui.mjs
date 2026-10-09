@@ -6,12 +6,17 @@ import http from "node:http";
 import { readFile, writeFile, mkdir, chmod } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomUUID, createHmac } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { brotliDecompressSync } from "node:zlib";
 import { chromium } from "playwright-core";
 import binary from "@sparticuz/chromium";
 import { db, rest } from "./sql-adapter.mjs";
+import { rehearseBackup } from "../../scripts/lib/backup-restore.mjs";
+const localBrowser = process.env.BIMBINGTA_UI_BROWSER;
+if (!localBrowser && process.platform !== "linux")
+  throw new Error("Set BIMBINGTA_UI_BROWSER to an installed Chromium browser executable on this platform.");
 const exec = async (q, p) => db.query(q, p);
 const secret = "local-test-secret-not-for-production-000000";
 function token(id, email) {
@@ -80,7 +85,7 @@ async function as(who, fn) {
     throw e;
   }
 }
-const root = new URL("../../dist-harness/", import.meta.url).pathname;
+const root = fileURLToPath(new URL("../../dist-harness/", import.meta.url));
 const server = http.createServer(async (req, res) => {
   const body = await new Promise((resolve) => {
     const parts = [];
@@ -202,35 +207,39 @@ const build = spawnSync(
   },
 );
 if (build.status) throw new Error(build.stderr);
-const binBase = "node_modules/@sparticuz/chromium/bin/";
-if (
-  !existsSync("/tmp/chromium") ||
-  (await readFile("/tmp/chromium")).length < 1000
-) {
-  await writeFile(
-    "/tmp/chromium",
-    brotliDecompressSync(await readFile(binBase + "chromium.br")),
-  );
-  await chmod("/tmp/chromium", 0o700);
-}
-for (const name of ["fonts", "swiftshader"]) {
-  await writeFile(
-    `/tmp/${name}.tar`,
-    brotliDecompressSync(await readFile(binBase + name + ".tar.br")),
-  );
-  await mkdir(name === "fonts" ? "/tmp/fonts" : "/tmp", { recursive: true });
-  const r = spawnSync("tar", [
-    "--no-same-owner",
-    "-xf",
-    `/tmp/${name}.tar`,
-    "-C",
-    name === "fonts" ? "/tmp/fonts" : "/tmp",
-  ]);
-  if (r.status) throw new Error(r.stderr.toString());
+if (!localBrowser) {
+  const binBase = "node_modules/@sparticuz/chromium/bin/";
+  if (
+    !existsSync("/tmp/chromium") ||
+    (await readFile("/tmp/chromium")).length < 1000
+  ) {
+    await writeFile(
+      "/tmp/chromium",
+      brotliDecompressSync(await readFile(binBase + "chromium.br")),
+    );
+    await chmod("/tmp/chromium", 0o700);
+  }
+  for (const name of ["fonts", "swiftshader"]) {
+    await writeFile(
+      `/tmp/${name}.tar`,
+      brotliDecompressSync(await readFile(binBase + name + ".tar.br")),
+    );
+    await mkdir(name === "fonts" ? "/tmp/fonts" : "/tmp", { recursive: true });
+    const r = spawnSync("tar", [
+      "--no-same-owner",
+      "-xf",
+      `/tmp/${name}.tar`,
+      "-C",
+      name === "fonts" ? "/tmp/fonts" : "/tmp",
+    ]);
+    if (r.status) throw new Error(r.stderr.toString());
+  }
 }
 const browser = await chromium.launch({
-  executablePath: "/tmp/chromium",
-  args: binary.args.filter((a) => !a.includes("disable-web-security")),
+  executablePath: localBrowser || "/tmp/chromium",
+  // Single-process Chromium shares session state across test contexts; use
+  // separate renderer processes so owner and student remain distinct actors.
+  args: localBrowser ? [] : binary.args.filter((a) => !a.includes("disable-web-security") && a !== "--single-process"),
   headless: true,
 });
 const errors = [];
@@ -305,6 +314,67 @@ function pdfFixture() {
   return Buffer.from(out);
 }
 try {
+  const traceOwner = await login(owner);
+  // Saving an existing record must retain the new values in its persisted
+  // editor draft, including after reload and a subsequent edit of another field.
+  await traceOwner.goto(`${url}/proyek/${project.id}/keterlacakan`);
+  await traceOwner.getByRole("button", { name: "Tambah keterlacakan", exact: true }).click();
+  await traceOwner.getByLabel("Tujuan", { exact: true }).fill("Tujuan awal");
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.getByRole("cell", { name: "T1 Tujuan awal", exact: true }).waitFor();
+  await traceOwner.waitForFunction(() => document.querySelector('input[maxlength="20"]')?.value === "T1" && [...document.querySelectorAll("textarea")].some(t => t.value === ""));
+  assert.equal(await traceOwner.getByLabel("Tujuan", { exact: true }).first().inputValue(), "");
+  await traceOwner.getByRole("button", { name: "Tambah keterlacakan", exact: true }).click();
+  await traceOwner.getByText("Ubah / verifikasi", { exact: true }).click();
+  const traceNote = "Periksa lingkup dan evaluasi pada bimbingan pertama";
+  await traceOwner.getByLabel(/^Catatan pembimbing/).fill(traceNote);
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.waitForFunction(() => [...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Simpan keterlacakan" && !b.disabled));
+  assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+  await traceOwner.reload();
+  await traceOwner.getByText("Ubah / verifikasi", { exact: true }).click();
+  await traceOwner.getByLabel(/^Catatan pembimbing/).waitFor();
+  assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+  await traceOwner.getByLabel("Masalah", { exact: true }).fill("Masalah diperbarui");
+  await traceOwner.getByRole("button", { name: "Simpan keterlacakan", exact: true }).click();
+  await traceOwner.waitForFunction(() => [...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Simpan keterlacakan" && !b.disabled));
+  const traceSaved = (await exec("select * from traceability_rows where project_id=$1", [project.id])).rows;
+  assert.equal(traceSaved.length, 1);
+  assert.equal(traceSaved[0].owner_note, traceNote);
+  assert.equal(traceSaved[0].problem, "Masalah diperbarui");
+  assert.equal(traceSaved[0].status, "draft");
+  console.log("UI: traceability creation clears the new form; edits survive save, reload and a second-field edit");
+
+  const qaDir = join(root, "qa");
+  await mkdir(qaDir, { recursive: true });
+  for (const width of [1280, 390, 320]) {
+    await traceOwner.setViewportSize({ width, height: 900 });
+    const table = await traceOwner.locator("table").boundingBox();
+    const editor = await traceOwner.locator('td[colspan="5"]').boundingBox();
+    assert.ok(table && editor && Math.abs(table.width - editor.width) < 2,
+      "Traceability editor must span the full table width");
+    assert.equal(await traceOwner.evaluate(() =>
+      document.documentElement.scrollWidth <= window.innerWidth), true,
+      "Table overflow must stay inside its scroll container");
+    const form = await traceOwner.locator('td[colspan="5"] details > div').boundingBox();
+    assert.ok(form && form.x >= 0 && form.x + form.width <= width,
+      "Editor form must fit the viewport without horizontal scrolling");
+    if (width >= 768)
+      assert.ok(form.width >= table.width - 28,
+        "Desktop editor form must retain the full available table width");
+    for (const control of await traceOwner.locator('td[colspan="5"] input, td[colspan="5"] textarea, td[colspan="5"] select, td[colspan="5"] button').all()) {
+      const box = await control.boundingBox();
+      assert.ok(box && box.x >= 0 && box.x + box.width <= width,
+        "Editor inputs and save button must stay within the viewport");
+    }
+    assert.equal(await traceOwner.getByLabel(/^Catatan pembimbing/).inputValue(), traceNote);
+    await traceOwner.screenshot({
+      path: join(qaDir, `traceability-${width}.png`), fullPage: true,
+    });
+  }
+  console.log("UI: traceability editor spans the table at desktop/mobile widths; screenshots saved in dist-harness/qa");
+
+  await traceOwner.close();
   page = await login(student, 390);
   await page.goto(`${url}/proyek/${project.id}/naskah`);
   await page
@@ -491,6 +561,7 @@ try {
   await page.getByRole("link", { name: "https://example.test/demo" }).waitFor();
   console.log("UI: HTTPS demo resource persists after reload");
 
+
   await p.goto(`${url}/proyek/${project.id}/ekspor`);
   const csvPromise = p.waitForEvent("download");
   await p.getByRole("button", { name: "Revisi CSV", exact: true }).click();
@@ -516,6 +587,15 @@ try {
   console.log(
     "UI: ZIP backup contains both original PDFs and authorized metadata manifest",
   );
+  const backupBytes = await readFile(await zip.path());
+  await mkdir(join(root, "qa"), { recursive: true });
+  await writeFile(join(root, "qa", "workspace-backup.zip"), backupBytes);
+  const restoreReport = await rehearseBackup(backupBytes);
+  assert.equal(restoreReport.passed, true);
+  assert.equal(restoreReport.pdf_files, 2);
+  assert.equal(restoreReport.rollback_verified, true);
+  await writeFile(join(root, "qa", "restore-report.json"), JSON.stringify(restoreReport, null, 2));
+  console.log("UI: actual exported ZIP restored into disposable SQL with both PDFs verified; rollback passed (not hosted)");
   // The discussion unmounted above. No polling should continue from that thread.
   const previous = polls;
   await new Promise((r) => setTimeout(r, 16000));
