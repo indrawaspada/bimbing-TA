@@ -124,7 +124,7 @@ export function inspectBackup(bytes) {
   return { metadata, manifest, files, bytesHash: digest(bytes) };
 }
 
-export function planRestore(archive) {
+export function planRestore(archive, { existingOwnerUid } = {}) {
   const m = archive.metadata;
   ensure(AI_TABLES.every((t) => m[t].length === 0) && m.findings.every((f) => !f.run_id && f.source !== "ai" && !f.original_ai) && m.traceability_rows.every((r) => r.source !== "ai_suggestion"), "ai_history_restore_not_supported");
   ensure(m.resources.every((r) => !r.optional_file_path), "resource_attachment_restore_not_supported");
@@ -142,7 +142,13 @@ export function planRestore(archive) {
     sourceIds.add(uid);
   }
   const targetIds = new Set();
+  if (existingOwnerUid) {
+    ensure(UUID.test(existingOwnerUid) && (!sourceIds.has(existingOwnerUid) || existingOwnerUid === m.project.owner_uid), "invalid_existing_owner_mapping");
+    ids.set(m.project.owner_uid, existingOwnerUid);
+    targetIds.add(existingOwnerUid);
+  }
   for (const id of sourceIds) {
+    if (ids.has(id)) continue;
     let replacement;
     do { replacement = randomUUID(); } while (sourceIds.has(replacement) || targetIds.has(replacement));
     ids.set(id, replacement);
@@ -244,7 +250,7 @@ export async function extractionDigest(db, versionId) {
   )::text,'UTF8')),'hex') as hash`, [versionId])).rows[0].hash;
 }
 
-async function importPlan(db, archive, plan) {
+async function importPlan(db, archive, plan, { existingOwnerUid } = {}) {
   const columns = new Map();
   for (const table of ["projects", ...TABLES, "pages", "chapter_ranges"]) {
     const result = await db.query("select column_name from information_schema.columns where table_schema='public' and table_name=$1", [table]);
@@ -258,13 +264,21 @@ async function importPlan(db, archive, plan) {
   };
   for (const [uid, role] of [[plan.project.owner_uid, "owner"], [plan.project.student_uid, "student"]]) {
     if (!uid) continue;
-    const email = `restore-${role}@example.test`;
+    if (role === "owner" && existingOwnerUid) {
+      ensure(uid === existingOwnerUid, "restored_owner_binding_mismatch");
+      const existing = (await db.query(`select count(*)::int n from public.memberships m join auth.users u on u.id=m.auth_user_id
+        where m.auth_user_id=$1 and m.role='owner' and m.active and u.email_confirmed_at is not null
+        and (u.raw_app_meta_data->>'provider'='google' or u.raw_app_meta_data->'providers' ? 'google')`, [uid])).rows[0];
+      ensure(existing.n === 1, "existing_verified_google_owner_required");
+      continue;
+    }
+    const email = `restore-${role}-${uid}@example.test`;
     await db.query("insert into auth.users(id,email,email_confirmed_at,raw_app_meta_data) values($1,$2,now(),$3)", [uid, email, { provider: "google", providers: ["google"] }]);
     await db.query("insert into public.memberships(auth_user_id,verified_email,role) values($1,$2,$3)", [uid, email, role]);
   }
   await db.query("select set_config('request.jwt.claims',$1,true)", [JSON.stringify({ sub: plan.project.owner_uid, role: "authenticated" })]);
   if (plan.project.invitation_id)
-    await db.query("insert into public.invitations(id,normalized_email,claimed_uid,created_by) values($1,'restore-student@example.test',$2,$3)", [plan.project.invitation_id, plan.project.student_uid, plan.project.owner_uid]);
+    await db.query("insert into public.invitations(id,normalized_email,claimed_uid,created_by) values($1,$2,$3,$4)", [plan.project.invitation_id, `restore-student-${plan.project.invitation_id}@example.test`, plan.project.student_uid, plan.project.owner_uid]);
   const project = await insert("projects", plan.project);
   ensure(project.student_uid === plan.project.student_uid, "restored_student_binding_mismatch");
   const documents = new Map(plan.documents.map((d) => [d.version_id, d]));
@@ -316,15 +330,77 @@ async function importPlan(db, archive, plan) {
     const row = (await db.query("select file_hash,file_size from public.versions where file_path=$1", [path])).rows[0];
     ensure(row.file_hash === digest(bytes) && Number(row.file_size) === bytes.length, "restored_pdf_hash_mismatch");
   }
-  await db.query("select app.audit($1,'restore_rehearsal','projects',$1,1,$2)", [plan.project.id, { source_backup_sha256: archive.bytesHash, mode: "local_disposable" }]);
+  await db.query("select app.audit($1,'restore_rehearsal','projects',$1,1,$2)", [plan.project.id, { source_backup_sha256: archive.bytesHash, mode: existingOwnerUid ? "native_sql_rollback" : "local_disposable" }]);
   const counts = {};
   for (const table of TABLES) {
     counts[table] = Number((await db.query(`select count(*) as count from public.${table} where project_id=$1`, [plan.project.id])).rows[0].count);
     ensure(counts[table] === plan.rows[table].length, "restored_row_count_mismatch");
   }
-  for (const table of ["private_notes", "workspace_drafts", "ai_runs", "budget_settings", "model_settings"])
-    ensure(Number((await db.query(`select count(*) as count from public.${table}`)).rows[0].count) === 0, "unexpected_private_or_ai_state");
+  for (const table of ["private_notes", "workspace_drafts", "ai_runs"])
+    ensure(Number((await db.query(`select count(*) as count from public.${table} where project_id=$1`, [plan.project.id])).rows[0].count) === 0, "unexpected_private_or_ai_state");
+  if (!existingOwnerUid)
+    for (const table of ["budget_settings", "model_settings"])
+      ensure(Number((await db.query(`select count(*) as count from public.${table}`)).rows[0].count) === 0, "unexpected_private_or_ai_state");
   return { counts, pdf_files: bytesByPath.size, version_sequence_gaps_preserved: sequenceMarkers.size, temporary_sequence_markers_removed: sequenceMarkers.size };
+}
+
+// The caller owns the connection; this helper has no COMMIT or service API path.
+// Hashes are computed in SQL: original rows (including Auth) never leave the database.
+export async function captureRehearsalState(db) {
+  const tables = (await db.query("select tablename from pg_tables where schemaname='public' order by tablename")).rows.map((r) => r.tablename);
+  ensure(tables.length > 0 && tables.every((t) => /^[a-z_][a-z_0-9]*$/.test(t)), "unsupported_rehearsal_table_set");
+  const names = [...tables.map((t) => `public.${t}`), "auth.users", "storage.objects", "storage.buckets"];
+  const result = await db.query(names.map((name) => `select '${name}' as table_name,count(*)::int rows,
+    encode(sha256(convert_to(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]'),'UTF8')),'hex') as content_hash
+    from ${name} t`).join(" union all ") + " order by table_name");
+  return result.rows;
+}
+
+// Native SET LOCAL ROLE/JWT claims check only; this does not obtain an Auth token.
+export async function verifyRestoredSqlAccess(db, plan) {
+  const actor = async (uid) => db.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claims',$2,true)",
+    [uid, JSON.stringify({ sub: uid, role: "authenticated" })]);
+  await db.query("set local role authenticated");
+  try {
+    await actor(plan.project.owner_uid);
+    ensure((await db.query("select count(*)::int n from projects where id=$1", [plan.project.id])).rows[0].n === 1, "restored_owner_sql_access_denied");
+    if (plan.project.student_uid) {
+      await actor(plan.project.student_uid);
+      const projects = (await db.query("select id from projects order by id")).rows;
+      ensure(projects.length === 1 && projects[0].id === plan.project.id, "restored_student_project_isolation_failed");
+      ensure((await db.query("select count(*)::int n from private_notes")).rows[0].n === 0, "restored_student_private_note_isolation_failed");
+      for (const table of ["versions", "findings", "comments"])
+        ensure((await db.query(`select count(*)::int n from public.${table} where project_id=$1`, [plan.project.id])).rows[0].n === plan.rows[table].length, "restored_student_sql_access_denied");
+      const files = (await db.query("select count(*)::int n from storage.objects where bucket_id='thesis-files' and name like $1", [`${plan.project.id}/%`])).rows[0].n;
+      ensure(files === plan.rows.versions.filter((v) => v.status !== "upload_failed").length, "restored_student_storage_rls_denied");
+    }
+  } finally { await db.query("reset role"); }
+  return { sql_role_access_checked: true, api_auth_tested: false, api_storage_tested: false };
+}
+
+export async function rehearseBackupInTransaction(db, bytes, { existingOwnerUid, inspectRestored } = {}) {
+  const archive = inspectBackup(bytes), plan = planRestore(archive, { existingOwnerUid });
+  let before, result;
+  await db.query("begin isolation level repeatable read");
+  try {
+    await db.query("set local statement_timeout='20s'");
+    await db.query("set local lock_timeout='5s'");
+    before = await captureRehearsalState(db);
+    result = await importPlan(db, archive, plan, { existingOwnerUid });
+    await verifyRestoredSqlAccess(db, plan);
+    if (inspectRestored) await inspectRestored(db, plan);
+  } catch (e) {
+    if (e instanceof BackupError) throw e;
+    throw new BackupError("transactional_sql_restore_validation_failed");
+  } finally { await db.query("rollback"); }
+  await db.query("begin read only");
+  try {
+    const after = await captureRehearsalState(db);
+    ensure(JSON.stringify(after) === JSON.stringify(before), "rehearsal_original_data_changed");
+  } finally { await db.query("rollback"); }
+  return { ...result, backup_sha256: archive.bytesHash, rollback_verified: true,
+    original_tables_verified: before.length, original_data_unchanged: true,
+    sql_role_access_checked: true, api_auth_tested: false, api_storage_tested: false, provider_called: false };
 }
 
 export async function rehearseBackup(bytes, { inspectRestored } = {}) {

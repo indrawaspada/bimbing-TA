@@ -12,6 +12,12 @@ Executed [run 37867323836](https://github.com/indrawaspada/bimbing-TA/actions/ru
 
 The remaining sections describe the historical checkpoint C job and must not be used as instructions to test the nonempty current DEV project.
 
+## Optional native SQL restore rollback on current DEV
+
+On `codex/checkpoint-d`, use `run_restore_sql_rehearsal=true`, `run_persona_tests=false`, `apply_rubric_guard_repair=false`, and the exact DEV ref. The runner first checks source-matched migrations/guards and AI OFF. It maps the synthetic source owner to the sole existing active verified Google owner without modifying that account, then restores two synthetic manual-ZIP scenarios (v1/v2 and v1/v4) into private SQL transactions. Auth/student/project/Storage metadata fixtures are never committed. Every path rolls back; 31 table counts/content hashes verify original data unchanged. Authenticated SQL-role checks verify owner/student access and student isolation. Locks/timeouts are bounded; no reset, seed, migration, provider activation or network Auth/Storage call occurs.
+
+This uses native PostgreSQL but synthetic PDF bytes, Storage metadata and simulated JWT claims. It does not pass real Google OAuth, browser extraction, upload/download/signed URL APIs or persistent maintenance restore. The offline CLI remains separate and refuses hosted/apply flags. Results and limits belong in `CHECKPOINT_D.md`; opt-in preparation alone is not a hosted pass.
+
 The manual workflow **BimbingTA hosted validation** runs on GitHub's Ubuntu runner with Node 22 and Yarn 1.22.22. It checks out an exact reviewed checkpoint C commit, not a moving branch. The small launcher must exist on the default `main` branch for GitHub to show **Run workflow**. No automatic push, pull-request or schedule trigger is configured.
 
 ## Repository configuration

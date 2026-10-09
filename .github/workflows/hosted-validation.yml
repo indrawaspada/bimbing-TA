@@ -1,5 +1,5 @@
 name: BimbingTA hosted validation
-run-name: BimbingTA DEV - ${{ inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
+run-name: BimbingTA DEV - ${{ inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
 
 on:
   workflow_dispatch:
@@ -16,6 +16,11 @@ on:
         default: tghcovjdsxirhpexpqor
       apply_rubric_guard_repair:
         description: 'D branch only: apply additive 00010 rubric/prompt guard repair after read-only audit; no reseed or user-data updates'
+        type: boolean
+        required: false
+        default: false
+      run_restore_sql_rehearsal:
+        description: 'D only: synthetic restore SQL in DEV transaction, reuse existing owner; always rollback; no API/provider calls'
         type: boolean
         required: false
         default: false
@@ -63,6 +68,7 @@ jobs:
           yarn build
           yarn typecheck:edge
           node --test --test-concurrency=1 tests/hosted-audit/*.test.mjs
+          node --test --test-concurrency=1 tests/restore/hosted-rollback.test.mjs
       - name: Audit before explicitly selected rubric guard repair
         if: inputs.apply_rubric_guard_repair
         timeout-minutes: 3
@@ -80,6 +86,12 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: node scripts/hosted-audit.mjs
+      - name: Synthetic restore SQL rehearsal with verified rollback
+        if: inputs.run_restore_sql_rehearsal
+        timeout-minutes: 4
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-restore-rehearsal.mjs --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
   validate:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
