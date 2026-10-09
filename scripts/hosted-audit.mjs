@@ -31,5 +31,6 @@ try {
 } catch (error) {
   // Never print database messages/details, assertions' actual values or configuration.
   console.error('CHECKPOINT D AUDIT FAILED:', /^[A-Z0-9_]+$/.test(error.code || '') ? error.code : 'AUDIT_CONNECTION_OR_QUERY_FAILED');
+  if (error.auditDiagnostic) console.error('CATALOG COUNTS/FIELDS:', JSON.stringify(error.auditDiagnostic));
   process.exitCode = 1;
 } finally { if (client) await client.end().catch(() => {}); }

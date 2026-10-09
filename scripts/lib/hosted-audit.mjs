@@ -11,7 +11,16 @@ const check = (ok, code) => { if (!ok) throw Object.assign(new Error(code), { co
 const canonical = (v) => v === null || typeof v !== 'object' ? JSON.stringify(v)
   : Array.isArray(v) ? `[${v.map(canonical).join(',')}]`
     : `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
-const equal = (a, b, code) => check(canonical(a) === canonical(b), code);
+const equal = (a, b, code) => {
+  if (canonical(a) === canonical(b)) return;
+  const error = Object.assign(new Error(code), { code });
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const index = b.findIndex((row, i) => canonical(row) !== canonical(a[i]));
+    error.auditDiagnostic = { actual_count: a.length, expected_count: b.length, first_index: index,
+      fields: index < 0 ? [] : Object.keys(b[index]).filter((k) => canonical(b[index][k]) !== canonical(a[index]?.[k])) };
+  }
+  throw error;
+};
 
 export function validateAuditTarget(cfg) {
   check(cfg.url === `https://${DEV_REF}.supabase.co`, 'AUDIT_WRONG_PROJECT');
@@ -45,7 +54,8 @@ export async function catalogSnapshot(db, functions) {
     from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relkind='r' and a.attnum>0 and not a.attisdropped
     order by c.relname,a.attnum`);
-  const policies = await rows(`select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check
+  // pg's name[] (OID 1003) has no built-in parser; text[] is decoded identically to PGlite.
+  const policies = await rows(`select schemaname,tablename,policyname,permissive,roles::text[] roles,cmd,qual,with_check
     from pg_policies where schemaname='public' or (schemaname='storage' and tablename='objects')
     order by schemaname,tablename,policyname`);
   const fn = await rows(`select n.nspname schema,p.proname name,pg_get_function_identity_arguments(p.oid) args,
