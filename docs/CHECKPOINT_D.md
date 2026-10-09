@@ -1,10 +1,10 @@
 # Checkpoint D — AI, rubrik dan keterlacakan
 
-Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau deployment Emergent. **Migrasi 0009 dan Edge Function sudah diterapkan ke Supabase dev; acceptance hosted tahap D belum lengkap. AI tetap nonaktif dan provider belum diuji live.** Hasil lokal di bawah tetap terpisah dari hasil hosted.
+Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau deployment Emergent. **Migrasi sampai 0010 dan Edge Function sudah diterapkan ke Supabase dev; acceptance hosted tahap D belum lengkap. AI tetap nonaktif dan provider belum diuji live.** Hasil lokal di bawah tetap terpisah dari hasil hosted.
 
 ## Status hosted — 9 Oktober 2026
 
-- Sembilan migrasi diterapkan; RLS dan ACL RPC service-only diperiksa. Fungsi memakai Auth getUser dan pemeriksaan membership/proyek; gateway legacy JWT nonaktif sesuai persetujuan pengguna.
+- Sepuluh migrasi diterapkan, termasuk perbaikan guard rubrik/prompt 0010; audit native ulang cocok dengan sumber untuk seluruh hash migrasi, 28 tabel RLS, 56 fungsi, 62 policy dan 47 trigger. Fungsi memakai Auth getUser dan pemeriksaan membership/proyek; gateway legacy JWT nonaktif sesuai persetujuan pengguna.
 - Preview branch: https://codex-checkpoint-d.bimbing-ta.pages.dev/. Login Google pembimbing nyata, persistensi sesi, status AI terautentikasi (POST 200/OPTIONS 204), rubrik dan bobot diperiksa. Origin preview exact diizinkan; origin produksi belum diaktifkan untuk fungsi D.
 - Undangan mahasiswa dan proyek RAG pertama dibuat atas instruksi pembimbing, dengan lima milestone dan satu baris keterlacakan draft. Metadata JSON dan ZIP tanpa PDF berhasil diekspor; CRC serta hash manifest cocok.
 - Konflik catatan privat dari dua tab owner nyata ditolak pada sesi yang memakai versi lama. Muat versi terbaru berhasil; teks uji dikembalikan ke isi kosong semula.
@@ -30,7 +30,7 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 Pada proyek dev saat ini langkah migrasi dan deployment fungsi sudah selesai; jangan menerapkan ulang atau mereset data. Urutan berikut adalah referensi setup baru atau upgrade dari C, bukan daftar yang perlu diulang pada dev saat ini. Langkah provider/model masih tertunda; AI tetap nonaktif sampai pengguna secara eksplisit mengizinkan aktivasi dan uji live.
 
 1. Simpan kode branch D, review, dan pertahankan main produksi sampai konfigurasi hosted siap. Backup data yang sudah ada; **jangan jalankan suite persona empty-DEV pada proyek yang kini memiliki akun pembimbing nyata**.
-2. Jalankan runner migrasi read-only `node scripts/hosted-migrate.mjs`. Pada upgrade dari C, delapan migrasi lama harus cocok dan hanya `20261008000009_ai_execution.sql` tertunda. Pada dev saat ini, sembilan migrasi seharusnya cocok dan tidak ada yang tertunda. Terapkan hanya migrasi yang terbukti belum ada, dengan konfirmasi ref target, tanpa reset dan tanpa reseed rubrik/bobot pengguna. Admin env hanya lokal/Secrets, bukan GitHub source.
+2. Jalankan runner migrasi read-only `node scripts/hosted-migrate.mjs`. Pada upgrade dari C, delapan migrasi lama harus cocok; migrasi ledger `20261008000009_ai_execution.sql` dan guard `20261009000010_versioned_content_guard.sql` tertunda. Pada dev saat ini, sepuluh migrasi harus cocok dan tidak ada yang tertunda. Runner memvalidasi URL/DB terhadap ref dev yang ditetapkan serta hash SQL seluruh migrasi yang tercatat. Terapkan hanya migrasi yang terbukti belum ada, dengan konfirmasi ref target, tanpa reset dan tanpa reseed rubrik/bobot pengguna. Admin env hanya lokal/Secrets, bukan GitHub source.
 3. Deploy fungsi dari direktori repo dengan Supabase CLI resmi yang sudah diautentikasi:
    ```sh
    supabase functions deploy ai --project-ref tghcovjdsxirhpexpqor
@@ -133,9 +133,15 @@ Regresi tambahan menemukan `app.versioned_content_guard()` membaca `NEW.content`
 
 Audit baru `scripts/hosted-audit.mjs` menerima database dev berisi akun/proyek nyata. Semua query audit berjalan dalam transaksi **repeatable-read/read-only**, lalu rollback. Audit membandingkan hash SQL migrasi, tabel/RLS, grant kolom, policy, source/ACL/search-path fungsi, trigger, bucket PDF privat, rubrik/prompt asli, Google-only membership dan AI tetap OFF. Output hanya agregat dan status; tidak berisi email, ID pengguna/proyek, teks naskah atau secret.
 
-Workflow manual existing mempunyai job D terpisah yang checkout SHA dispatch persis. Default D hanya audit read-only; opsi `apply_rubric_guard_repair` menjalankan audit kondisi awal lalu runner existing dengan `--only=20261009000010`, tanpa `--seed`, dan audit ulang. Mode persona C tetap tidak boleh dijalankan pada dev sekarang. Saat catatan ini disiapkan, migrasi 0010 **belum dikonfirmasi diterapkan hosted**; hasil Actions akan dicatat setelah eksekusi. Audit native tetap bukan bukti login Google mahasiswa, cross-user UI/PDF, restore hosted atau provider live.
+Workflow manual existing mempunyai job D terpisah yang checkout SHA dispatch persis. Default D hanya audit read-only; opsi `apply_rubric_guard_repair` menjalankan audit kondisi awal lalu runner existing dengan `--only=20261009000010`, tanpa `--seed`, dan audit ulang. Mode persona C tetap tidak boleh dijalankan pada dev sekarang. Audit native tetap bukan bukti login Google mahasiswa, cross-user UI/PDF, restore hosted atau provider live.
 
-Build produksi, Edge TypeScript, workspace 27/27, restore 22/22 dan AI mock 14/14 lulus sesudah perubahan ini. Tes `yarn test:hosted:audit` mencakup transaksi read-only, penolakan drift migrasi/RLS/policy/ACL service-only, bucket publik/AI aktif, bobot pengguna tanpa reseed, dan immutable snapshot. AI tetap nonaktif.
+Build produksi, Edge TypeScript, workspace 27/27, restore 22/22 dan AI mock 14/14 lulus sesudah perubahan ini. Tes `yarn test:hosted:audit` **11/11 lulus**, termasuk owner authenticated menyimpan bobot dan mahasiswa tidak dapat mengubahnya, transaksi read-only, penolakan drift migrasi/RLS/policy/ACL service-only, bucket publik/AI aktif, bobot pengguna tanpa reseed, dan immutable snapshot. AI tetap nonaktif.
+
+[Run 37867323836](https://github.com/indrawaspada/bimbing-TA/actions/runs/37867323836), SHA `a2a106c836707db41e74ad483969e37c10639aa1`, **SUCCESS**. Audit awal sembilan migrasi lulus, hanya migrasi 0010 diterapkan **07:57:54 WIB**, lalu audit read-only akhir lulus **07:58:02 WIB** (00:58:02 UTC), 9 Oktober 2026. Sepuluh hash SQL migrasi cocok; **28 tabel RLS, 56 fungsi, 62 policy, 47 trigger**, private PDF bucket, 92 aturan/rubrik dan prompt asli cocok dengan sumber. Config membership Google-only. Model aktif, anggaran AI aktif, run dan reservation masing-masing **0**.
+
+Agregat sebelum/sesudah sama: **1 Auth user, 1 owner aktif, 0 mahasiswa aktif, 1 proyek, 2 undangan, 0 versi dan 0 PDF Storage**. Tidak ada test persona, perubahan Auth/provider, reset, reseed, atau penghapusan data. Ini juga mengonfirmasi login mahasiswa dan alur PDF belum mempunyai data acceptance nyata. Secret DB tetap di Actions, service key tidak dipakai atau diambil ke workspace. Cloudflare untuk SHA yang sama **SUCCESS**, selesai **07:57:42 WIB**; preview tetap https://codex-checkpoint-d.bimbing-ta.pages.dev/.
+
+Run awal [37867092448](https://github.com/indrawaspada/bimbing-TA/actions/runs/37867092448) berhenti sebelum migrasi karena parser `pg` mengembalikan `name[]` roles sebagai string, sementara PGlite mengembalikan array. Query katalog diperbaiki menggunakan `roles::text[]`; perbandingan aturan akses tetap ketat, bukan dilewati. Run sukses di atas membuktikan policy/function/trigger hosted cocok, termasuk guard 0010 sesudah repair.
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
