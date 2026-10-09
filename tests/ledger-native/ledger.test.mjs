@@ -154,8 +154,10 @@ test('A05 native overlap: completed scope cache creates no second reservation or
     assert.ok(cursor);
   }
   assert.equal(cursor.id, original.run.id);
-  assert.deepEqual(first.run.normalized_result, original.run.normalized_result);
-  assert.deepEqual(second.value.run.normalized_result, original.run.normalized_result);
+  assert.equal(cursor.state, 'succeeded');
+  assert.deepEqual(cursor.normalized_result, { findings: [] });
+  assert.deepEqual(first.run.normalized_result, cursor.normalized_result);
+  assert.deepEqual(second.value.run.normalized_result, cursor.normalized_result);
   assert.equal(first.run.usage.new_cost_usd, 0);
   assert.equal(second.value.run.usage.new_cost_usd, 0);
   assert.equal((await counts()).reservations, 1);
