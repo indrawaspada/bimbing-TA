@@ -9,7 +9,7 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 - Undangan mahasiswa dan proyek RAG pertama dibuat atas instruksi pembimbing, dengan lima milestone dan satu baris keterlacakan draft. Metadata JSON dan ZIP tanpa PDF berhasil diekspor; CRC serta hash manifest cocok.
 - Konflik catatan privat dari dua tab owner nyata ditolak pada sesi yang memakai versi lama. Muat versi terbaru berhasil; teks uji dikembalikan ke isi kosong semula.
 - Perbaikan editor mempertahankan nilai setelah mengubah record keterlacakan, revisi, pertemuan dan sumber; hanya formulir record baru yang direset. Regresi UI lokal membuktikan catatan tetap bertahan setelah simpan/reload dan edit kolom lain; uji tersebut memakai persona sintetis, bukan Supabase hosted.
-- Belum diuji hosted: login/hak akses mahasiswa nyata, alur PDF, konkurensi ledger AI, provider live dan restore. Rehearsal restore lokal untuk ZIP proyek manual tersedia dengan batas yang dijelaskan di bawah. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
+- Belum diuji hosted: login/hak akses mahasiswa nyata, alur PDF/Storage API, konkurensi ledger AI, provider live dan restore file lengkap. Restore SQL native dengan ZIP sintetis dan rollback sudah lulus dua kasus; rehearsal lokal tersedia dengan batas di bawah. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
 
 ## Yang tersedia
 
@@ -143,8 +143,6 @@ Agregat sebelum/sesudah sama: **1 Auth user, 1 owner aktif, 0 mahasiswa aktif, 1
 
 Run awal [37867092448](https://github.com/indrawaspada/bimbing-TA/actions/runs/37867092448) berhenti sebelum migrasi karena parser `pg` mengembalikan `name[]` roles sebagai string, sementara PGlite mengembalikan array. Query katalog diperbaiki menggunakan `roles::text[]`; perbandingan aturan akses tetap ketat, bukan dilewati. Run sukses di atas membuktikan policy/function/trigger hosted cocok, termasuk guard 0010 sesudah repair.
 
-## Referensi kontrak (dibuka 8 Oktober 2026)
-
 ### Lanjutan native SQL restore rollback — 9 Oktober 2026
 
 Runner terpisah `scripts/hosted-restore-rehearsal.mjs` disiapkan untuk ZIP sintetis manual pada dev berisi owner/proyek nyata. CLI wajib menerima ref dev exact dan `--use-existing-owner`; identitas owner tunggal yang aktif dan terverifikasi Google dipakai sebagai pemetaan eksplisit. Owner/akun/proyek lama tidak diubah. Mahasiswa sintetis, undangan, proyek restore, versi/PDF metadata, revisi/proof, komentar, pertemuan, sumber, milestone dan keterlacakan hanya dibuat dalam transaksi, tanpa Auth/Storage API.
@@ -153,7 +151,13 @@ Setiap kasus berakhir **ROLLBACK**, bukan commit. Jumlah serta SHA-256 isi selur
 
 Kasus native yang disiapkan: dua versi berurutan dan gap v1/v4, masing-masing dua PDF sebagai byte sintetis dan relasi lengkap. Hash file/snapshot, pemetaan proof/balasan/locator dan penghapusan penanda sequence tetap diverifikasi; definisi guard, RLS, policy dan ACL tidak diubah. Budget/model/provider AI tidak disentuh. Audit dev read-only dijalankan sebelum/sesudah. Mode workflow `run_restore_sql_rehearsal=true` default **false**; memakai hanya DB Secret setelah build/tes, di branch D.
 
-Regresi lokal restore **28/28 lulus**: 22 kasus offline terdahulu serta enam kasus tambahan untuk target nonempty, data awal identik, RLS, kegagalan di tengah transaksi, mapping owner tidak valid, gap dan penolakan flag apply. Audit/guard lokal **11/11 lulus**. Saat catatan ini disiapkan, runner native **belum diberi label lulus hosted**; hasil eksekusi akan dicatat setelah Actions. B02 restore file melalui layanan Supabase, Google mahasiswa, ledger concurrency dan provider live masih tertunda. CLI offline tetap tidak menerima mode hosted/apply.
+Regresi lokal restore **28/28 lulus**: 22 kasus offline terdahulu serta enam kasus tambahan untuk target nonempty, data awal identik, RLS, kegagalan di tengah transaksi, mapping owner tidak valid, gap dan penolakan flag apply. Audit/guard lokal **11/11 lulus**. B02 restore file melalui layanan Supabase, Google mahasiswa, ledger concurrency dan provider live masih tertunda. CLI offline tetap tidak menerima mode hosted/apply.
+
+[Run 37875028465](https://github.com/indrawaspada/bimbing-TA/actions/runs/37875028465), SHA `170b984b2b4a034773452f555dfe942ee11c7fe7`, **SUCCESS**, selesai **9 Oktober 2026 09:33:47 WIB** (02:33:47 UTC). Frozen install, build/frontend TypeScript, Edge TypeScript, 11 tes audit, enam tes rollback lokal, audit native dev dan **2/2 kasus restore SQL hosted lulus**. Pada tiap kasus: 2 versi, 1 revisi/proof, 2 komentar/balasan, 1 pertemuan, 1 sumber, 1 milestone, 1 keterlacakan dan 2 file sebagai byte sintetis. Gap v1/v4 mempertahankan sequence serta membersihkan dua penanda sementara. Role SQL dan Storage RLS lulus; semua transaksi rollback dan **31 tabel awal terverifikasi identik**, tanpa menampilkan hash/isi/identitas asli.
+
+Report: `mode=hosted_native_sql_rollback`, `synthetic_fixture=true`, `rollback_verified=true`, `original_data_unchanged=true`, `sql_role_access_checked=true`, `api_auth_tested=false`, `api_storage_tested=false`, `provider_called=false`, `ai_enabled=false`. Audit sebelum/sesudah cocok dengan sumber sepuluh migrasi dan AI OFF. Tidak ada migrasi/reseed/commit data pengguna, Auth/Storage API, Google login, provider call atau persistent restore. Cloudflare SHA yang sama **SUCCESS**, selesai **09:32:56 WIB**; preview tetap Cloudflare Pages, main tetap checkpoint C.
+
+## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
 - https://developers.openai.com/api/docs/guides/your-data
