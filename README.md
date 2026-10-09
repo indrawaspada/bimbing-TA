@@ -76,6 +76,8 @@ Windows revalidation on 9 October 2026 passed the production build, Edge TypeScr
 
 Offline restore rehearsal is available through `node scripts/restore-backup.mjs <backup.zip> [--report=<new-report.json>]`. It validates the app's manual project ZIP and imports it into fresh in-memory PostgreSQL WASM, checks relinked records and file/snapshot hashes, then rolls back and closes the database. It has no hosted/apply mode, does not load credentials, and refuses AI history, legacy resource attachments, incomplete uploads and version sequence gaps. The report contains counts and limits, not thesis text or source identities. UI acceptance also rehearses the ZIP actually exported by the app; synthetic backup/report artifacts are in ignored `dist-harness/qa/`. This does not complete hosted restore acceptance or constitute a full workspace backup.
 
+Hosted public read-only smoke on 9 October 2026 passed 7/7: anonymous table access and missing/invalid bearer requests were denied, exact-preview CORS worked and an unlisted origin was rejected. Public Auth settings showed Google/Email and global signup enabled; nothing was changed. This adds hosted connectivity/denial evidence, not authenticated student/PDF/restore acceptance. Current evidence is in `docs/CHECKPOINT_D.md`.
+
 ## Build
 `yarn build` → `dist/` (Cloudflare Pages: production branch `main`, repository root, build command `yarn build`, output `dist`, `NODE_VERSION=22.23.3`, `YARN_VERSION=1.22.22`; `public/_redirects` gives SPA fallback).
 

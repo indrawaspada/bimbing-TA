@@ -105,6 +105,26 @@ Folder laporan harus sudah ada dan nama file laporan harus belum dipakai; runner
 
 B01/B02 lokal ini menambah bukti validasi, bukan kelulusan restore hosted. Acceptance mahasiswa/PDF nyata, restore maintenance ke Supabase uji, histori AI/ledger dan provider live tetap tertunda. AI tetap nonaktif. Untuk penulisan restore hosted kelak, target dan pemetaan pengguna harus eksplisit serta data lama tidak ditimpa; runner saat ini sengaja hanya menyediakan rehearsal lokal.
 
+## Hosted publik read-only — 9 Oktober 2026
+
+Commit rehearsal `521cf124637a99635ff78b30fc9a0e90c0fbdfda` dipush ke branch D; [Cloudflare Pages](https://dash.cloudflare.com/?to=/c6c9b2e1c1e03350d43b23942205ef7d/pages/view/bimbing-ta/3b095865-c30c-4ee3-a616-bb4bbefb3467) **SUCCESS**, selesai **06:58:52 WIB** (8 Oktober 23:58:52 UTC). PR #2 tetap draft, main tetap `13a2551`; runner restore hanya tool lokal, bukan endpoint atau fitur restore di frontend.
+
+Pada **07:01:59 WIB** (00:01:59 UTC), tujuh pemeriksaan HTTP publik pada dev `tghcovjdsxirhpexpqor` **7/7 lulus**. Request menggunakan publishable config dari aset frontend yang sudah publik, tanpa login/JWT pengguna, kredensial admin, fixture, atau operasi provider. Nilai key tidak dicatat di repo/laporan.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Anonymous REST `projects?select=id` | **401 / 42501**, tidak ada baris data |
+| Anonymous REST `app_config?select=id` | **401 / 42501**, tidak ada baris data |
+| Public Auth settings | **200**; Google ON, Email ON, global signup ON |
+| AI OPTIONS dengan origin preview exact | **204**, allow-origin sama dengan `https://codex-checkpoint-d.bimbing-ta.pages.dev` |
+| AI POST status tanpa bearer | **401 / unauthorized** |
+| AI POST status dengan bearer palsu | **401 / unauthorized** |
+| AI OPTIONS origin `https://rejected-origin.example.test` | **403 / origin_not_allowed**, tanpa allow-origin |
+
+Settings Auth publik tidak membuktikan kebijakan membership aplikasi atau login pengguna. Email masih aktif di dev sebagaimana inspeksi historis C; panduan menonaktifkan Email untuk produksi tetap belum ditutup oleh pemeriksaan ini. Global signup ON dibutuhkan untuk login OAuth pertama sesuai setup yang ada. Tidak ada pengaturan Auth yang diubah.
+
+Artefak lokal: `dist-harness/qa/hosted-anon-smoke.json` (git-ignored). Ini bukti hosted untuk penolakan anonim/token/CORS dan konektivitas publik saja; RLS antarpengguna, consent/budget/ledger, PDF, restore hosted dan provider live tetap memerlukan acceptance terpisah. AI tetap nonaktif; tidak ada provider operation, signup, migrasi atau perubahan data yang diminta pada pemeriksaan ini.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
