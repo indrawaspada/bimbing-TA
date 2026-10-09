@@ -22,6 +22,12 @@ Executed [run 37875028465](https://github.com/indrawaspada/bimbing-TA/actions/ru
 
 The manual workflow **BimbingTA hosted validation** runs on GitHub's Ubuntu runner with Node 22 and Yarn 1.22.22. It checks out an exact reviewed checkpoint C commit, not a moving branch. The small launcher must exist on the default `main` branch for GitHub to show **Run workflow**. No automatic push, pull-request or schedule trigger is configured.
 
+## Optional isolated native ledger concurrency
+
+On the D branch, `run_native_ledger_tests=true` adds a separate job with official `postgres:17.11-bookworm`, a runner-local dedicated database and no repository Secrets. The job applies exact source migrations plus the synthetic Supabase shim/seed, then `yarn test:ledger:native` verifies actual row-lock blocking between distinct backend connections. URI/database/empty-target/PostgreSQL-major guards prevent the harness from targeting Supabase or an existing workspace. All model/budget/run data are synthetic and remain in the disposable test container. No Auth/Storage/provider API is used; real application AI stays disabled.
+
+Cases cover idempotency, global monthly cost/call caps across projects, one active run per project, rollback of an initial claimant, cache, idempotency scope conflict, budget disabled and service-only ACL. `pg_blocking_pids` observation is required for overlapping cases. Local syntax/target tests are preparation only; native CI results must be recorded before claiming a pass. This does not prove Supabase Edge dispatch, real tokens or provider execution. Service-container setup follows [GitHub documentation](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers); lock semantics follow [PostgreSQL 17](https://www.postgresql.org/docs/17/explicit-locking.html).
+
 ## Repository configuration
 
 GitHub repository **Settings → Secrets and variables → Actions**:

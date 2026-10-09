@@ -1,5 +1,5 @@
 name: BimbingTA hosted validation
-run-name: BimbingTA DEV - ${{ inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
+run-name: BimbingTA DEV - ${{ inputs.run_native_ledger_tests && 'isolated native ledger and audit' || inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
 
 on:
   workflow_dispatch:
@@ -24,6 +24,11 @@ on:
         type: boolean
         required: false
         default: false
+      run_native_ledger_tests:
+        description: 'D only: native PG17 ledger concurrency in disposable localhost database; no Supabase secrets/provider calls'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -33,6 +38,44 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  isolated_native_ledger:
+    if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d' && inputs.run_native_ledger_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_DB: bimbingta_ledger_test
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout exact dispatched D source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without lifecycle scripts
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --ignore-scripts --non-interactive
+      - name: Native ledger with observed multi-connection lock waits
+        timeout-minutes: 3
+        env:
+          BT_NATIVE_LEDGER_DB_URL: postgresql://postgres:ci-only-password@127.0.0.1:5432/bimbingta_ledger_test
+        run: yarn test:ledger:native
   checkpoint_d_audit:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d'
     runs-on: ubuntu-latest

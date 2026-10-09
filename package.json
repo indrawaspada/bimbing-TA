@@ -19,6 +19,7 @@
     "test:ai": "node --experimental-strip-types --no-warnings --test --test-concurrency=1 tests/ai/*.test.mjs",
     "test:restore": "node --test --test-concurrency=1 tests/restore/*.test.mjs",
     "test:hosted:audit": "node --test --test-concurrency=1 tests/hosted-audit/*.test.mjs",
+    "test:ledger:native": "node --test --test-concurrency=1 tests/ledger-native/*.test.mjs",
     "typecheck:edge": "tsc -p tsconfig.edge.json"
   },
   "dependencies": {

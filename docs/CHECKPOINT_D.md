@@ -159,6 +159,14 @@ Report: `mode=hosted_native_sql_rollback`, `synthetic_fixture=true`, `rollback_v
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
+### Konkurensi ledger PostgreSQL native terpisah — 9 Oktober 2026
+
+`yarn test:ledger:native` disiapkan untuk PostgreSQL **17.11** disposable di localhost runner CI, memakai shim dan seluruh migrasi sumber tanpa mengubah SQL fungsi. Harness menolak URI hosted, database selain `bimbingta_ledger_test`, database nonempty atau engine bukan PostgreSQL 17 sebelum inisialisasi. Tidak membaca admin/provider config, tidak memakai kredensial Supabase, tidak menjalankan HTTP atau provider. Model/budget AI sintetis hanya aktif pada database test terpisah; AI Supabase dev tetap OFF.
+
+Sembilan kasus native memeriksa dua koneksi/backend PID berbeda: idempotency sama, cap biaya bulanan lintas proyek, cap jumlah panggilan, satu run aktif per proyek, rollback klaim pertama, cache, penolakan redirect idempotency, budget disabled dan ACL RPC service-only. Tujuh skenario overlap wajib membuktikan waiter diblokir backend pertama melalui `pg_blocking_pids`; tidak mengandalkan sleep/perintah berurutan sebagai bukti konkurensi. Klaim yang mendapat dispatch tidak memanggil provider. Database/container dibuang oleh runner setelah job.
+
+Workflow existing menambah job `isolated_native_ledger` dengan opsi `run_native_ledger_tests=true` default false. Job memakai PostgreSQL service terpisah dan **tanpa repository Secrets**; job audit dev tetap terpisah dan read-only. Dua pengaman target lulus lokal; Docker engine lokal tidak tersedia. Eksekusi konkurensi native belum diberi label lulus sampai hasil CI tersedia. Pengujian ini bukan Supabase gateway/Edge/provider live atau login Google; acceptance hosted/live tetap terpisah.
+
 - https://developers.openai.com/api/docs/guides/structured-outputs
 - https://developers.openai.com/api/docs/guides/your-data
 - https://platform.claude.com/docs/en/build-with-claude/structured-outputs
