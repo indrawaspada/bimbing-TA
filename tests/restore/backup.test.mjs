@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unzipSync, zipSync, strToU8 } from "fflate";
-import { inspectBackup, planRestore, rehearseBackup, digest } from "../../scripts/lib/backup-restore.mjs";
+import { inspectBackup, planRestore, rehearseBackup, digest, MAX_VERSION_SEQUENCE } from "../../scripts/lib/backup-restore.mjs";
 import { makeBackupFixture, packBackup } from "./fixtures.mjs";
 let fixture;
 before(async () => { fixture = await makeBackupFixture(); });
@@ -114,6 +114,22 @@ test("Nested locators must reference an exported version and an actual page", ()
   assert.throws(() => planRestore(inspectBackup(packBackup(page, fixture.pdfs))), /locator_page_outside_version/);
 });
 
+test("A locator page ID must belong to its version and match its PDF page index", () => {
+  const m = metadata(), first = m.documents[0].pages[0], second = m.documents[1].pages[0];
+  m.traceability_rows[0].theory_locator = { version_id: first.version_id, page_id: second.id, pdf_page: 1 };
+  assert.throws(() => planRestore(inspectBackup(packBackup(m, fixture.pdfs))), /locator_page_version_mismatch/);
+  m.traceability_rows[0].theory_locator = { version_id: first.version_id, page_id: first.id, pdf_page: 2 };
+  assert.throws(() => planRestore(inspectBackup(packBackup(m, fixture.pdfs))), /locator_page_index_mismatch/);
+  m.traceability_rows[0].theory_locator = { page_id: first.id, pdf_page: 1 };
+  const plan = planRestore(inspectBackup(packBackup(m, fixture.pdfs)));
+  assert.equal(plan.rows.traceability_rows[0].theory_locator.page_id, plan.ids.get(first.id));
+});
+
+test("A finding cannot move its locator to another version through nested JSON", () => {
+  const m = metadata(); m.findings[0].locator.version_id = m.findings[0].revision_proof.version_id;
+  assert.throws(() => planRestore(inspectBackup(packBackup(m, fixture.pdfs))), /finding_locator_version_mismatch/);
+});
+
 test("Actor references cannot bind to a version UUID or give a student owner approval", () => {
   const actor = metadata(); actor.comments[0].author_uid = actor.versions[0].id;
   assert.throws(() => planRestore(inspectBackup(packBackup(actor, fixture.pdfs))), /unmapped_identity_or_entity/);
@@ -121,9 +137,57 @@ test("Actor references cannot bind to a version UUID or give a student owner app
   assert.throws(() => planRestore(inspectBackup(packBackup(approval, fixture.pdfs))), /unmapped_identity_or_entity/);
 });
 
-test("Sequence gaps and incomplete uploads require explicit follow-up instead of renumbering", () => {
+test("Sequence gaps retain original numbers and proof, without leaving markers or changing the original guard", async () => {
   const gaps = metadata(); gaps.versions.find((v) => v.sequence === 2).sequence = 4;
-  assert.throws(() => planRestore(inspectBackup(packBackup(gaps, fixture.pdfs))), /version_sequence_gaps_not_supported/);
+  const result = await rehearseBackup(packBackup(gaps, fixture.pdfs), { inspectRestored: async (db, plan) => {
+    const versions = (await db.query("select * from versions order by sequence")).rows;
+    assert.deepEqual(versions.map((v) => v.sequence), [1, 4]);
+    assert.equal((await db.query("select pg_get_functiondef('app.versions_guard()'::regprocedure) as definition")).rows[0].definition, fixture.versionsGuard);
+    assert.equal((await db.query("select tgenabled from pg_trigger where tgname='versions_guard'")).rows[0].tgenabled, "O");
+    assert.equal((await db.query("select revision_proof from findings")).rows[0].revision_proof.version_id, versions[1].id);
+    assert.equal(Number((await db.query("select count(*) n from storage.objects")).rows[0].n), 2);
+    assert.equal(versions.some((v) => v.file_name === "restore-sequence-marker.pdf"), false);
+    await db.exec("savepoint continuation_check");
+    const next = (await db.query("insert into versions(project_id,file_name,file_size) values($1,'next.pdf',1) returning sequence", [plan.project.id])).rows[0];
+    assert.equal(next.sequence, 5);
+    await db.exec("rollback to continuation_check");
+  } });
+  assert.equal(result.version_sequence_gaps_preserved, 2);
+  assert.equal(result.temporary_sequence_markers_removed, 2);
+  assert.equal(result.counts.versions, 2);
+  assert.equal(result.pdf_files, 2);
+  assert.equal(result.rollback_verified, true);
+});
+
+test("Deleted leading versions and unordered metadata keep the surviving sequence numbers", async () => {
+  const gaps = metadata();
+  gaps.versions.find((v) => v.sequence === 1).sequence = 3;
+  gaps.versions.find((v) => v.sequence === 2).sequence = 4;
+  gaps.versions.reverse();
+  const result = await rehearseBackup(packBackup(gaps, fixture.pdfs), { inspectRestored: async (db) => {
+    assert.deepEqual((await db.query("select sequence from versions order by sequence")).rows.map((v) => v.sequence), [3, 4]);
+  } });
+  assert.equal(result.version_sequence_gaps_preserved, 2);
+  assert.equal(result.counts.versions, 2);
+});
+
+test("Temporary gap markers consume no final file allocation when the PDF quota is exactly full", async () => {
+  const m = metadata(); m.versions.find((v) => v.sequence === 2).sequence = 4;
+  m.project.storage_limit_bytes = m.versions.reduce((sum, v) => sum + Number(v.file_size), 0);
+  const result = await rehearseBackup(packBackup(m, fixture.pdfs), { inspectRestored: async (db, plan) => {
+    assert.equal(Number((await db.query("select app.project_storage_bytes($1) as bytes", [plan.project.id])).rows[0].bytes), m.project.storage_limit_bytes);
+  } });
+  assert.equal(result.counts.versions, 2);
+  assert.equal(result.temporary_sequence_markers_removed, 2);
+});
+
+test("Invalid, duplicate or unbounded version numbers and incomplete uploads are refused", () => {
+  for (const sequence of [0, -1, 1.5, "2", 1]) {
+    const invalid = metadata(); invalid.versions.find((v) => v.sequence === 2).sequence = sequence;
+    assert.throws(() => planRestore(inspectBackup(packBackup(invalid, fixture.pdfs))), /invalid_version_sequence/);
+  }
+  const excessive = metadata(); excessive.versions.find((v) => v.sequence === 2).sequence = MAX_VERSION_SEQUENCE + 1;
+  assert.throws(() => planRestore(inspectBackup(packBackup(excessive, fixture.pdfs))), /version_sequence_rehearsal_limit/);
   const pending = metadata(); pending.versions[0].status = "uploading";
   assert.throws(() => inspectBackup(packBackup(pending, fixture.pdfs)), /unresolved_upload/);
 });
@@ -135,7 +199,7 @@ test("A recomputed archive hash cannot hide a changed sealed extraction snapshot
 
 test("Failed upload entries remain failed and do not invent or restore a PDF", async () => {
   const m = metadata(), id = randomUUID();
-  m.versions.push({ ...m.versions[0], id, sequence: 3, file_path: `${m.project.id}/${id}.pdf`,
+  m.versions.push({ ...m.versions[0], id, sequence: 5, file_path: `${m.project.id}/${id}.pdf`,
     status: "upload_failed", file_hash: null, extraction_hash: null, page_count: null,
     confirmed_at: null, confirmed_by: null, extraction_method: null, error_message: "Synthetic failed upload" });
   m.documents.push({ version_id: id, pages: [], chapter_ranges: [] });
@@ -147,6 +211,7 @@ test("Failed upload entries remain failed and do not invent or restore a PDF", a
   } });
   assert.equal(result.counts.versions, 3);
   assert.equal(result.pdf_files, 2);
+  assert.equal(result.version_sequence_gaps_preserved, 2);
 });
 
 test("A pending-student project without PDFs restores manual records without claiming a student identity", async () => {

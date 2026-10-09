@@ -9,6 +9,7 @@ import { PGlite } from "@electric-sql/pglite";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 export const MAX_BACKUP_BYTES = 128 * 1024 * 1024;
+export const MAX_VERSION_SEQUENCE = 2048;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const TABLES = ["versions", "findings", "comments", "meetings", "resources", "milestones", "traceability_rows"];
 const AI_TABLES = ["ai_runs", "ai_messages", "ai_rating_reviews"];
@@ -128,7 +129,8 @@ export function planRestore(archive) {
   ensure(AI_TABLES.every((t) => m[t].length === 0) && m.findings.every((f) => !f.run_id && f.source !== "ai" && !f.original_ai) && m.traceability_rows.every((r) => r.source !== "ai_suggestion"), "ai_history_restore_not_supported");
   ensure(m.resources.every((r) => !r.optional_file_path), "resource_attachment_restore_not_supported");
   const versions = [...m.versions].sort((a, b) => a.sequence - b.sequence);
-  ensure(versions.every((v, i) => v.sequence === i + 1), "version_sequence_gaps_not_supported");
+  ensure(versions.every((v) => Number.isSafeInteger(v.sequence) && v.sequence >= 1) && new Set(versions.map((v) => v.sequence)).size === versions.length, "invalid_version_sequence");
+  ensure(versions.every((v) => v.sequence <= MAX_VERSION_SEQUENCE), "version_sequence_rehearsal_limit");
   const ids = new Map(), sourceIds = new Set();
   const sourceRows = [m.project, ...TABLES.flatMap((t) => m[t]), ...m.documents.flatMap((d) => [...d.pages, ...d.chapter_ranges])];
   for (const row of sourceRows) {
@@ -168,14 +170,22 @@ export function planRestore(archive) {
     }));
   };
   const versionMap = new Map(versions.map((v) => [v.id, v]));
+  const pageMap = new Map(m.documents.flatMap((d) => d.pages.map((p) => [p.id, p])));
   const checkLocator = (value, inherited = null, depth = 0) => {
     ensure(depth <= 32, "nested_metadata_depth_limit");
     if (Array.isArray(value)) { value.forEach((v) => checkLocator(v, inherited, depth + 1)); return; }
     if (!object(value)) return;
-    const versionId = value.version_id ?? value.source_version_id ?? inherited;
+    let versionId = value.version_id ?? value.source_version_id ?? inherited;
     if (value.version_id != null) ensure(versionMap.has(value.version_id), "locator_version_missing");
     if (value.source_version_id != null) ensure(versionMap.has(value.source_version_id), "locator_version_missing");
     if (value.project_id != null) ensure(value.project_id === m.project.id, "locator_project_mismatch");
+    if (value.page_id != null) {
+      const page = pageMap.get(value.page_id);
+      ensure(page, "locator_page_missing");
+      ensure(versionId == null || page.version_id === versionId, "locator_page_version_mismatch");
+      ensure(value.pdf_page == null || value.pdf_page === page.pdf_page, "locator_page_index_mismatch");
+      versionId ??= page.version_id;
+    }
     const version = versionMap.get(versionId);
     if (value.pdf_page != null)
       ensure(version && Number.isInteger(value.pdf_page) && value.pdf_page >= 1 && value.pdf_page <= version.page_count, "locator_page_outside_version");
@@ -189,6 +199,9 @@ export function planRestore(archive) {
     for (const key of ["theory_locator", "method_locator", "result_locator", "conclusion_locator"]) checkLocator(row[key]);
   for (const finding of m.findings) {
     if (finding.version_id) ensure(versionMap.has(finding.version_id), "finding_version_missing");
+    for (const key of ["version_id", "source_version_id"])
+      if (finding.locator?.[key] != null)
+        ensure(finding.locator[key] === finding.version_id, "finding_locator_version_mismatch");
     checkLocator(finding.locator, finding.version_id);
     if (finding.revision_proof) {
       const proof = finding.revision_proof, v = versionMap.get(proof.version_id), base = versionMap.get(finding.version_id);
@@ -257,10 +270,27 @@ async function importPlan(db, archive, plan) {
   const documents = new Map(plan.documents.map((d) => [d.version_id, d]));
   const sourceIdsByTarget = new Map([...plan.ids].map(([source, target]) => [target, source]));
   const bytesByPath = new Map();
+  const sequenceMarkers = new Set();
+  let nextSequence = 1;
   for (const version of plan.rows.versions) {
+    // Exercise the original max(sequence)+1 guard without changing its definition.
+    // Markers exist only in this private transaction, have no PDF, and are removed
+    // before dependent records, verification or the caller's inspection.
+    while (nextSequence < version.sequence) {
+      let id;
+      do { id = randomUUID(); } while (plan.ids.has(id) || sourceIdsByTarget.has(id) || sequenceMarkers.has(id));
+      const marker = await insert("versions", {
+        id, project_id: project.id, file_name: "restore-sequence-marker.pdf",
+        file_size: 1, status: "upload_failed", error_message: "Local rehearsal sequence marker",
+      });
+      ensure(marker.sequence === nextSequence, "restored_version_binding_mismatch");
+      sequenceMarkers.add(id);
+      nextSequence++;
+    }
     const failed = version.status === "upload_failed";
     const created = await insert("versions", { ...version, status: failed ? "upload_failed" : "uploading", file_hash: null, extraction_hash: null, confirmed_at: null, confirmed_by: null });
     ensure(created.sequence === version.sequence && created.file_path === version.file_path, "restored_version_binding_mismatch");
+    nextSequence++;
     if (!failed) {
       const oldId = sourceIdsByTarget.get(version.id);
       const bytes = archive.files[`files/${oldId}.pdf`];
@@ -276,6 +306,10 @@ async function importPlan(db, archive, plan) {
     if (!failed)
       await db.query("update public.versions set status=$2,extraction_hash=$3,confirmed_at=$4,confirmed_by=$5 where id=$1", [version.id, version.status, version.extraction_hash, version.confirmed_at, version.confirmed_by]);
   }
+  if (sequenceMarkers.size) {
+    const removed = await db.query("delete from public.versions where id=any($1::uuid[]) and project_id=$2 and status='upload_failed' returning id", [[...sequenceMarkers], project.id]);
+    ensure(removed.rows.length === sequenceMarkers.size, "sequence_marker_cleanup_failed");
+  }
   for (const table of ["findings", "comments", "meetings", "resources", "milestones", "traceability_rows"])
     for (const row of plan.rows[table]) await insert(table, row);
   for (const [path, bytes] of bytesByPath) {
@@ -290,7 +324,7 @@ async function importPlan(db, archive, plan) {
   }
   for (const table of ["private_notes", "workspace_drafts", "ai_runs", "budget_settings", "model_settings"])
     ensure(Number((await db.query(`select count(*) as count from public.${table}`)).rows[0].count) === 0, "unexpected_private_or_ai_state");
-  return { counts, pdf_files: bytesByPath.size };
+  return { counts, pdf_files: bytesByPath.size, version_sequence_gaps_preserved: sequenceMarkers.size, temporary_sequence_markers_removed: sequenceMarkers.size };
 }
 
 export async function rehearseBackup(bytes, { inspectRestored } = {}) {
@@ -308,7 +342,7 @@ export async function rehearseBackup(bytes, { inspectRestored } = {}) {
       backup_sha256: archive.bytesHash, ...result, rollback_verified: true,
       hosted_tested: false, ai_enabled: false,
       excluded: EXCLUDED,
-      limits: ["Manual project ZIP only; AI history, legacy attachments and version sequence gaps are refused.", "Auth/Storage are synthetic. PDFs are verified as bytes in memory, not uploaded to Supabase.", "No original audit history, private notes, drafts, memberships, consent, budgets or model configuration are restored.", "Updated timestamps and optimistic lock counters follow the target SQL triggers."],
+      limits: ["Manual project ZIP only; AI history and legacy attachments are refused. Original version sequence numbers are preserved up to 2048.", "Auth/Storage are synthetic. PDFs are verified as bytes in memory, not uploaded to Supabase.", "No original audit history, private notes, drafts, memberships, consent, budgets or model configuration are restored.", "Updated timestamps and optimistic lock counters follow the target SQL triggers."],
     };
   } catch (e) {
     await db.exec("rollback").catch(() => {});

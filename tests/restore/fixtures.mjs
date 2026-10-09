@@ -63,6 +63,7 @@ export async function makeBackupFixture() {
       metadata[table] = (await q(`select * from ${table} where project_id=$1`, [project])).rows;
     for (const id of versionIds)
       metadata.documents.push({ version_id: id, pages: (await q("select * from pages where version_id=$1", [id])).rows, chapter_ranges: (await q("select * from chapter_ranges where version_id=$1", [id])).rows });
-    return { metadata, pdfs, zip: packBackup(metadata, pdfs) };
+    const versionsGuard = (await q("select pg_get_functiondef('app.versions_guard()'::regprocedure) as definition")).rows[0].definition;
+    return { metadata, pdfs, zip: packBackup(metadata, pdfs), versionsGuard };
   } finally { await db.close(); }
 }
