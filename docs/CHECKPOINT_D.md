@@ -9,7 +9,7 @@ Dibangun di Codex dari main 13a2551, 8 Oktober 2026. Tidak memakai kredit atau d
 - Undangan mahasiswa dan proyek RAG pertama dibuat atas instruksi pembimbing, dengan lima milestone dan satu baris keterlacakan draft. Metadata JSON dan ZIP tanpa PDF berhasil diekspor; CRC serta hash manifest cocok.
 - Konflik catatan privat dari dua tab owner nyata ditolak pada sesi yang memakai versi lama. Muat versi terbaru berhasil; teks uji dikembalikan ke isi kosong semula.
 - Perbaikan editor mempertahankan nilai setelah mengubah record keterlacakan, revisi, pertemuan dan sumber; hanya formulir record baru yang direset. Regresi UI lokal membuktikan catatan tetap bertahan setelah simpan/reload dan edit kolom lain; uji tersebut memakai persona sintetis, bukan Supabase hosted.
-- Belum diuji hosted: login/hak akses mahasiswa nyata, alur PDF/Storage API, konkurensi ledger AI, provider live dan restore file lengkap. Restore SQL native dengan ZIP sintetis dan rollback sudah lulus dua kasus; rehearsal lokal tersedia dengan batas di bawah. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
+- Belum diuji hosted: login/hak akses mahasiswa nyata, alur PDF/Storage API, konkurensi melalui Supabase/Edge, provider live dan restore file lengkap. Konkurensi SQL PostgreSQL 17 terpisah lulus 11 tes di CI; restore SQL hosted dengan ZIP sintetis dan rollback lulus dua kasus. Bukti ini terpisah dari acceptance API/live di bawah. Tidak ada panggilan AI berbayar. PR #2 tetap draft dan main produksi tetap checkpoint C.
 
 ## Yang tersedia
 
@@ -157,15 +157,21 @@ Regresi lokal restore **28/28 lulus**: 22 kasus offline terdahulu serta enam kas
 
 Report: `mode=hosted_native_sql_rollback`, `synthetic_fixture=true`, `rollback_verified=true`, `original_data_unchanged=true`, `sql_role_access_checked=true`, `api_auth_tested=false`, `api_storage_tested=false`, `provider_called=false`, `ai_enabled=false`. Audit sebelum/sesudah cocok dengan sumber sepuluh migrasi dan AI OFF. Tidak ada migrasi/reseed/commit data pengguna, Auth/Storage API, Google login, provider call atau persistent restore. Cloudflare SHA yang sama **SUCCESS**, selesai **09:32:56 WIB**; preview tetap Cloudflare Pages, main tetap checkpoint C.
 
-## Referensi kontrak (dibuka 8 Oktober 2026)
-
 ### Konkurensi ledger PostgreSQL native terpisah — 9 Oktober 2026
 
 `yarn test:ledger:native` disiapkan untuk PostgreSQL **17.11** disposable di localhost runner CI, memakai shim dan seluruh migrasi sumber tanpa mengubah SQL fungsi. Harness menolak URI hosted, database selain `bimbingta_ledger_test`, database nonempty atau engine bukan PostgreSQL 17 sebelum inisialisasi. Tidak membaca admin/provider config, tidak memakai kredensial Supabase, tidak menjalankan HTTP atau provider. Model/budget AI sintetis hanya aktif pada database test terpisah; AI Supabase dev tetap OFF.
 
 Sembilan kasus native memeriksa dua koneksi/backend PID berbeda: idempotency sama, cap biaya bulanan lintas proyek, cap jumlah panggilan, satu run aktif per proyek, rollback klaim pertama, cache, penolakan redirect idempotency, budget disabled dan ACL RPC service-only. Tujuh skenario overlap wajib membuktikan waiter diblokir backend pertama melalui `pg_blocking_pids`; tidak mengandalkan sleep/perintah berurutan sebagai bukti konkurensi. Klaim yang mendapat dispatch tidak memanggil provider. Database/container dibuang oleh runner setelah job.
 
-Workflow existing menambah job `isolated_native_ledger` dengan opsi `run_native_ledger_tests=true` default false. Job memakai PostgreSQL service terpisah dan **tanpa repository Secrets**; job audit dev tetap terpisah dan read-only. Dua pengaman target lulus lokal; Docker engine lokal tidak tersedia. Eksekusi konkurensi native belum diberi label lulus sampai hasil CI tersedia. Pengujian ini bukan Supabase gateway/Edge/provider live atau login Google; acceptance hosted/live tetap terpisah.
+Workflow existing menambah job `isolated_native_ledger` dengan opsi `run_native_ledger_tests=true` default false. Job memakai PostgreSQL service terpisah dan **tanpa repository Secrets**; job audit dev tetap terpisah dan read-only. Dua pengaman target lulus lokal; Docker engine lokal tidak tersedia. Pengujian ini bukan Supabase gateway/Edge/provider live atau login Google; acceptance hosted/live tetap terpisah.
+
+[Run 37877916874](https://github.com/indrawaspada/bimbing-TA/actions/runs/37877916874), SHA `f4023bde4a4137be9520f2c970a7beff6349a3c2`, **SUCCESS**, 9 Oktober 2026. **11/11 tes lulus** pada **10:09:30 WIB** (03:09:30 UTC): sembilan kasus database dan dua pengaman. Engine `17.11 (Debian 17.11-1.pgdg12+2)` menerapkan sepuluh migrasi sumber; **7/7 skenario overlap membuktikan lock wait** dengan backend PID berbeda. Cache berantai kembali ke hasil asal yang selesai, konten sama, tanpa dispatch/reservasi baru. Summary: `supabase_tested=false`, `provider_called=false`, `synthetic_database=true`, `supabase_ai_changed=false`. Container dibuang setelah tes.
+
+Job dev pada run yang sama lulus frozen install, build/Edge TypeScript, 11 audit lokal, enam rollback lokal dan audit hosted read-only, selesai **10:09:28 WIB**. AI asli tetap OFF; tidak ada migrasi/reseed/perubahan data dev. Cloudflare source yang sama **SUCCESS**, **10:10:48 WIB**. Browser tetap tidak terhubung sehingga Google mahasiswa, PDF hosted dan restore layanan file tetap belum diuji dalam sesi ini.
+
+Run pertama `37877453121` dan kedua `37877697969` lulus 10/11; kegagalan ada pada assertion fixture cache, bukan fungsi ledger. Tes awal terlalu mengharuskan direct cached_from ke root; tes kedua membandingkan payload dengan objek run sebelum selesai. Tes kini menelusuri provenance ke root selesai, membandingkan payload selesai dan biaya baru nol, tanpa perubahan fungsi/migrasi atau melewati assertion inti. Run sukses di atas merupakan bukti final; run gagal tidak dihitung lulus.
+
+## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
 - https://developers.openai.com/api/docs/guides/your-data

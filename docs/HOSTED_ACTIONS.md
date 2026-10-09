@@ -28,6 +28,8 @@ On the D branch, `run_native_ledger_tests=true` adds a separate job with officia
 
 Cases cover idempotency, global monthly cost/call caps across projects, one active run per project, rollback of an initial claimant, cache, idempotency scope conflict, budget disabled and service-only ACL. `pg_blocking_pids` observation is required for overlapping cases. Local syntax/target tests are preparation only; native CI results must be recorded before claiming a pass. This does not prove Supabase Edge dispatch, real tokens or provider execution. Service-container setup follows [GitHub documentation](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers); lock semantics follow [PostgreSQL 17](https://www.postgresql.org/docs/17/explicit-locking.html).
 
+Executed [run 37877916874](https://github.com/indrawaspada/bimbing-TA/actions/runs/37877916874), source `f4023bde4a4137be9520f2c970a7beff6349a3c2`, **SUCCESS** on 9 October 2026: **11/11** native tests (9 database + 2 guards), **7 observed lock waits**, PostgreSQL 17.11, all ten exact source migrations. Native step completed 03:09:30 UTC and container cleanup passed. The separate build/Edge typecheck/local-safety/read-only DEV audit job also passed. No Supabase AI activation, mutation, migration, provider key or provider call was involved.
+
 ## Repository configuration
 
 GitHub repository **Settings → Secrets and variables → Actions**:
