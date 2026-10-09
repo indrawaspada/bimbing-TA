@@ -173,6 +173,16 @@ Run pertama `37877453121` dan kedua `37877697969` lulus 10/11; kegagalan ada pad
 
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
+### Layanan file pada dev nonempty — persiapan 9 Oktober 2026
+
+Runner terpisah `scripts/hosted-file-rehearsal.mjs` disiapkan untuk **Auth/PostgREST/Storage nyata** pada dev berisi owner, tanpa menjalankan suite empty-DEV lama. Ref dev dan `--use-existing-owner` wajib exact. Tiga akun `bt-file-…@example.test` dibuat admin dengan email terkonfirmasi, tanpa signup, undangan Auth/email, password reset atau Google impersonation; password/JWT hanya di memori. Dua membership mahasiswa adalah enrollment SQL fixture eksplisit, bukan hasil Google claim. Owner lama hanya dipakai sebagai mapping restore; tidak ada token/login owner yang dibuat/diambil. Policy aplikasi tetap Google-only; Email Auth harus sudah aktif di dev atau runner menolak tanpa mengubah settings.
+
+Dua proyek baru bertanda run unik disiapkan. ZIP sintetis manual dipetakan ke proyek mahasiswa A, dengan versi/file, halaman/rentang, revisi/proof, komentar/balasan, pertemuan, sumber, milestone dan keterlacakan. Transfer dua file dan URL bertanda tangan memakai publishable key + JWT mahasiswa yang diterbitkan Supabase, bukan service key. Mahasiswa B, outsider email yang diundang namun tidak dienroll, dan anon menguji penolakan scope, promote role, owner fields, private notes, page/finding/file/signed URL. Edge `action=status` mahasiswa diuji tanpa aksi provider. Ini tidak membuktikan Google OAuth atau ekstraksi browser.
+
+Mode ini melakukan **commit fixture sementara** agar layanan Auth/Storage/REST dapat membacanya, lalu cleanup wajib. Jurnal recovery disiapkan sebelum mutasi, berisi marker run, ID dua proyek baru, tiga email sintetis exact, hash ZIP/source dan jumlah/hash isi 31 tabel awal; tidak berisi password, token, signed URL, owner email/ID, teks asli atau secret. Artifact recovery exact diupload sebelum akun/proyek/file dibuat; kegagalan upload artifact menghentikan langkah mutasi. Tidak boleh membatalkan paksa di tengah mode ini. Recovery hanya menghapus objek/proyek ber-marker run dan Auth user ber-email+metadata marker exact; original owner/proyek dilindungi. Storage dibersihkan sebelum metadata proyek dihapus agar retry tetap mempunyai registry. Admin API/DB hanya setup dan cleanup; tidak dipakai untuk asserted access.
+
+Saat persiapan: **9/9 tes lokal file QA dan 28/28 restore lulus**, PostgreSQL WASM/RLS nyata dengan transport Auth/Storage tiruan, bukan bukti API hosted. Case normal, failure saat transfer, cleanup Storage gagal/retry/idempotent, journal palsu menunjuk original project/user, perubahan ZIP, redirect signed URL, mapping student/project, CLI tanpa arbitrary ZIP/apply tercakup. Workflow D menambah `run_file_service_rehearsal` default false dan recovery always-run. AI/model/budget/migrasi/Google-only settings tidak disentuh; hasil hosted akan dicatat setelah eksekusi.
+
 - https://developers.openai.com/api/docs/guides/structured-outputs
 - https://developers.openai.com/api/docs/guides/your-data
 - https://platform.claude.com/docs/en/build-with-claude/structured-outputs

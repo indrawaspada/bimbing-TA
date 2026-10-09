@@ -1,5 +1,5 @@
 name: BimbingTA hosted validation
-run-name: BimbingTA DEV - ${{ inputs.run_native_ledger_tests && 'isolated native ledger and audit' || inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
+run-name: BimbingTA DEV - ${{ inputs.run_file_service_rehearsal && 'synthetic file services and cleanup' || inputs.run_native_ledger_tests && 'isolated native ledger and audit' || inputs.run_restore_sql_rehearsal && 'restore SQL rollback and audit' || inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
 
 on:
   workflow_dispatch:
@@ -26,6 +26,11 @@ on:
         default: false
       run_native_ledger_tests:
         description: 'D only: native PG17 ledger concurrency in disposable localhost database; no Supabase secrets/provider calls'
+        type: boolean
+        required: false
+        default: false
+      run_file_service_rehearsal:
+        description: 'D only: temporary synthetic Auth students/projects/PDFs on current DEV; exact-scope cleanup; no Google-only/AI setting changes'
         type: boolean
         required: false
         default: false
@@ -79,7 +84,7 @@ jobs:
   checkpoint_d_audit:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: ${{ inputs.run_file_service_rehearsal && 35 || 20 }}
     env:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
@@ -112,6 +117,7 @@ jobs:
           yarn typecheck:edge
           node --test --test-concurrency=1 tests/hosted-audit/*.test.mjs
           node --test --test-concurrency=1 tests/restore/hosted-rollback.test.mjs
+          node --test --test-concurrency=1 tests/file-qa/*.test.mjs
       - name: Audit before explicitly selected rubric guard repair
         if: inputs.apply_rubric_guard_repair
         timeout-minutes: 3
@@ -135,6 +141,39 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: node scripts/hosted-restore-rehearsal.mjs --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Prepare exact-scope file QA recovery journal (no hosted writes)
+        id: file_prepare
+        if: inputs.run_file_service_rehearsal
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs prepare --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Preserve non-secret recovery scope before creating fixtures
+        id: file_journal
+        if: inputs.run_file_service_rehearsal
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: file-qa-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .secrets/hosted-file-qa.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Real Auth/PostgREST/Storage file rehearsal and cleanup
+        id: file_run
+        if: inputs.run_file_service_rehearsal
+        timeout-minutes: 6
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs run --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
+      - name: Recover only this file QA scope and verify original data
+        if: ${{ always() && inputs.run_file_service_rehearsal && steps.file_prepare.outcome == 'success' }}
+        timeout-minutes: 4
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/hosted-file-rehearsal.mjs cleanup --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner
   validate:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

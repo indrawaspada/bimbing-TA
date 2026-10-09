@@ -32,6 +32,14 @@ Executed [run 37877916874](https://github.com/indrawaspada/bimbing-TA/actions/ru
 
 ## Repository configuration
 
+### Optional current-data Auth/PostgREST/Storage file QA
+
+Dispatch D with `run_file_service_rehearsal=true`; keep legacy personas, rubric repair, native ledger and SQL-only restore options false. The current-data audit and local file safety tests must pass. `prepare` creates a non-secret exact-scope recovery journal and synthetic ZIP with no hosted writes; the journal is uploaded using pinned `actions/upload-artifact` before fixture mutation. Admin-created confirmed password users receive genuine Supabase JWTs. Two student memberships are explicitly SQL-enrolled fixtures, while the invited outsider remains unenrolled and must fail the Google-only membership claim. Owner is reused for mapping without obtaining/creating an owner session or changing owner data.
+
+The run temporarily commits only three synthetic Auth users, two marked projects and two synthetic PDF objects plus manual records, asserts access via student JWT/public key, then removes Storage through the admin API, clears exact-scope SQL rows and deletes only matching Auth fixtures. Original owner/project identities and 31 table counts/content hashes are protected and checked. Settings/providers/budgets/AI/migrations are never modified. All assertion/network failures attempt cleanup; the separate always-run recovery retries and fails on residual/original-data differences. Passwords, tokens, keys, signed URLs and original data do not enter logs/artifacts.
+
+Do not force-cancel this mode. On interruption, download `file-qa-recovery-<run_id>-<attempt>` from that run, restore its `hosted-file-qa.json` to the git-ignored `.secrets` directory on the reviewed source, and execute `node scripts/hosted-file-rehearsal.mjs cleanup --confirm-ref=tghcovjdsxirhpexpqor --use-existing-owner` with existing private admin config. Recovery requires exact run markers and protects the real owner; never sweep users or objects by a broad prefix. No ZIP is needed for cleanup. A real Google/browser/persistent production restore pass cannot be inferred from synthetic password identities or these transfers.
+
 GitHub repository **Settings → Secrets and variables → Actions**:
 
 | Location | Name | Value source |

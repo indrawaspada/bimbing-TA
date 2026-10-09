@@ -124,7 +124,7 @@ export function inspectBackup(bytes) {
   return { metadata, manifest, files, bytesHash: digest(bytes) };
 }
 
-export function planRestore(archive, { existingOwnerUid } = {}) {
+export function planRestore(archive, { existingOwnerUid, existingStudentUid, targetProjectUid } = {}) {
   const m = archive.metadata;
   ensure(AI_TABLES.every((t) => m[t].length === 0) && m.findings.every((f) => !f.run_id && f.source !== "ai" && !f.original_ai) && m.traceability_rows.every((r) => r.source !== "ai_suggestion"), "ai_history_restore_not_supported");
   ensure(m.resources.every((r) => !r.optional_file_path), "resource_attachment_restore_not_supported");
@@ -146,6 +146,17 @@ export function planRestore(archive, { existingOwnerUid } = {}) {
     ensure(UUID.test(existingOwnerUid) && (!sourceIds.has(existingOwnerUid) || existingOwnerUid === m.project.owner_uid), "invalid_existing_owner_mapping");
     ids.set(m.project.owner_uid, existingOwnerUid);
     targetIds.add(existingOwnerUid);
+  }
+  if (existingStudentUid) {
+    ensure(m.project.student_uid && UUID.test(existingStudentUid) && !targetIds.has(existingStudentUid)
+      && (!sourceIds.has(existingStudentUid) || existingStudentUid === m.project.student_uid), "invalid_existing_student_mapping");
+    ids.set(m.project.student_uid, existingStudentUid);
+    targetIds.add(existingStudentUid);
+  }
+  if (targetProjectUid) {
+    ensure(UUID.test(targetProjectUid) && !sourceIds.has(targetProjectUid) && !targetIds.has(targetProjectUid), "invalid_target_project_mapping");
+    ids.set(m.project.id, targetProjectUid);
+    targetIds.add(targetProjectUid);
   }
   for (const id of sourceIds) {
     if (ids.has(id)) continue;
