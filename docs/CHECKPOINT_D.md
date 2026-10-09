@@ -127,6 +127,16 @@ Settings Auth publik tidak membuktikan kebijakan membership aplikasi atau login 
 
 Artefak lokal: `dist-harness/qa/hosted-anon-smoke.json` (git-ignored). Ini bukti hosted untuk penolakan anonim/token/CORS dan konektivitas publik saja; RLS antarpengguna, consent/budget/ledger, PDF, restore hosted dan provider live tetap memerlukan acceptance terpisah. AI tetap nonaktif; tidak ada provider operation, signup, migrasi atau perubahan data yang diminta pada pemeriksaan ini.
 
+### Perbaikan guard rubrik/prompt dan audit dev berisi data — 9 Oktober 2026
+
+Regresi tambahan menemukan `app.versioned_content_guard()` membaca `NEW.content` saat dipakai oleh tabel rubrik, yang tidak mempunyai kolom tersebut. Perubahan bobot dapat gagal dengan SQLSTATE `42703`; trigger prompt juga berisiko membaca `NEW.content_json`. Migrasi tambahan `20261009000010_versioned_content_guard.sql` memisahkan cabang berdasarkan tabel sebelum membaca field. Isi, versi dan hash snapshot tetap tidak dapat diubah; binding trigger dan ACL dipertahankan. Sembilan migrasi historis tidak diedit, data/bobot pengguna tidak direset atau di-reseed.
+
+Audit baru `scripts/hosted-audit.mjs` menerima database dev berisi akun/proyek nyata. Semua query audit berjalan dalam transaksi **repeatable-read/read-only**, lalu rollback. Audit membandingkan hash SQL migrasi, tabel/RLS, grant kolom, policy, source/ACL/search-path fungsi, trigger, bucket PDF privat, rubrik/prompt asli, Google-only membership dan AI tetap OFF. Output hanya agregat dan status; tidak berisi email, ID pengguna/proyek, teks naskah atau secret.
+
+Workflow manual existing mempunyai job D terpisah yang checkout SHA dispatch persis. Default D hanya audit read-only; opsi `apply_rubric_guard_repair` menjalankan audit kondisi awal lalu runner existing dengan `--only=20261009000010`, tanpa `--seed`, dan audit ulang. Mode persona C tetap tidak boleh dijalankan pada dev sekarang. Saat catatan ini disiapkan, migrasi 0010 **belum dikonfirmasi diterapkan hosted**; hasil Actions akan dicatat setelah eksekusi. Audit native tetap bukan bukti login Google mahasiswa, cross-user UI/PDF, restore hosted atau provider live.
+
+Build produksi, Edge TypeScript, workspace 27/27, restore 22/22 dan AI mock 14/14 lulus sesudah perubahan ini. Tes `yarn test:hosted:audit` mencakup transaksi read-only, penolakan drift migrasi/RLS/policy/ACL service-only, bucket publik/AI aktif, bobot pengguna tanpa reseed, dan immutable snapshot. AI tetap nonaktif.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs

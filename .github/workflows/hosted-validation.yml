@@ -1,5 +1,5 @@
 name: BimbingTA hosted validation
-run-name: BimbingTA DEV - ${{ inputs.run_persona_tests && 'persona tests' || 'read-only preflight' }}
+run-name: BimbingTA DEV - ${{ inputs.apply_rubric_guard_repair && 'rubric guard repair and audit' || inputs.run_persona_tests && 'persona tests' || 'read-only audit' }}
 
 on:
   workflow_dispatch:
@@ -14,6 +14,11 @@ on:
         type: string
         required: true
         default: tghcovjdsxirhpexpqor
+      apply_rubric_guard_repair:
+        description: 'D branch only: apply additive 00010 rubric/prompt guard repair after read-only audit; no reseed or user-data updates'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -23,6 +28,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  checkpoint_d_audit:
+    if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/codex/checkpoint-d'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Refuse legacy personas and require exact DEV confirmation
+        env:
+          PERSONAS: ${{ inputs.run_persona_tests }}
+          CONFIRM_REF: ${{ inputs.confirm_ref }}
+        run: |
+          test "$PERSONAS" = 'false'
+          test "$CONFIRM_REF" = 'tghcovjdsxirhpexpqor'
+      - name: Checkout exact dispatched checkpoint D source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without lifecycle scripts
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --ignore-scripts --non-interactive
+      - name: Typecheck, build and local audit safety tests
+        run: |
+          yarn build
+          yarn typecheck:edge
+          node --test --test-concurrency=1 tests/hosted-audit/*.test.mjs
+      - name: Audit before explicitly selected rubric guard repair
+        if: inputs.apply_rubric_guard_repair
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-audit.mjs --allow-pending-rubric-repair
+      - name: Apply only reviewed additive rubric guard repair
+        if: inputs.apply_rubric_guard_repair
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-migrate.mjs --apply --confirm-ref=tghcovjdsxirhpexpqor --only=20261009000010
+      - name: Read-only audit of existing DEV data
+        timeout-minutes: 3
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/hosted-audit.mjs
   validate:
     if: github.repository == 'indrawaspada/bimbing-TA' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

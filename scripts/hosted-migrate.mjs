@@ -10,10 +10,12 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import pg from 'pg';
 import { ROOT, loadConfig, describe, redact } from './lib/env.mjs';
+import { validateAuditTarget } from './lib/hosted-audit.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => { const [k, v] = a.replace(/^--/, '').split('='); return [k, v ?? true]; }));
 let cfg;
 try { cfg = loadConfig({ needDb: true }); } catch (e) { console.error(e.message); process.exit(2); }
+try { validateAuditTarget(cfg); } catch (e) { console.error(e.code); process.exit(2); }
 const ref = new URL(cfg.url).hostname.split('.')[0];
 console.log(`target: ${describe(cfg)} mode=${args.apply ? 'APPLY' : 'DRY-RUN'}`);
 if (args.apply && args['confirm-ref'] !== ref) {
@@ -30,13 +32,23 @@ try {
   await client.connect();
   // read-only in dry run: only inspect; the tracking table is created only in --apply mode
   const hasTracking = (await client.query(`select to_regclass('supabase_migrations.schema_migrations') is not null as ok`)).rows[0].ok;
+  if (args.only && !hasTracking) throw new Error('Guarded repair requires the existing migration history; no tracking schema created.');
   if (args.apply && !hasTracking) {
     await client.query(`create schema if not exists supabase_migrations;
       create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text)`);
   }
-  const applied = new Set(hasTracking || args.apply ? (await client.query('select version from supabase_migrations.schema_migrations')).rows.map((r) => r.version) : []);
+  const recorded = hasTracking || args.apply ? (await client.query('select version,statements from supabase_migrations.schema_migrations')).rows : [];
+  for (const row of recorded) {
+    const file = files.find((f) => f.slice(0, 14) === row.version);
+    if (!file || row.statements?.length !== 1 || sha(row.statements[0]) !== sha(readFileSync(join(dir, file))))
+      throw new Error('Recorded migration SQL does not match this reviewed source; no pending migration applied.');
+  }
+  const applied = new Set(recorded.map((r) => r.version));
   console.log(`tracking table: ${hasTracking ? 'exists' : 'absent (will be created on --apply)'}`);
   const pending = files.filter((f) => !applied.has(f.slice(0, 14)));
+  if (args.only && (args.only !== '20261009000010' || pending.some((f) => f.slice(0, 14) !== args.only)))
+    throw new Error('Guarded repair permits only migration 20261009000010; no other pending SQL may be applied.');
+  if (args.only && args.seed) throw new Error('Guarded repair must not reseed owner weights.');
   console.log(`applied: ${files.filter((f) => applied.has(f.slice(0, 14))).join(', ') || '(none)'}`);
   console.log(`pending: ${pending.join(', ') || '(none)'}`);
 

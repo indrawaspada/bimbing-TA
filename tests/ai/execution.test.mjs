@@ -138,7 +138,7 @@ const userRest = (id, method, path, body) =>
 after(async () => {
   await db.close();
 });
-test("D fixture: nine migrations, active owner/two students, sealed version, explicit consent, configured disabled-by-default ledger", async () => {
+test("D fixture: source migrations, active owner/two students, sealed version, explicit consent, configured disabled-by-default ledger", async () => {
   for (const [id, email] of [
     [owner, "owner.ai@example.test"],
     [A, "a.ai@example.test"],

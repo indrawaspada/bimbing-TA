@@ -1,6 +1,14 @@
 # Hosted validation through GitHub Actions
 
-Historical checkpoint C workflow: its pinned source and preflight expect eight migrations and an empty DEV baseline. It does not validate checkpoint D and must not be run against the current nine-migration project with a real owner. See [CHECKPOINT_D.md](CHECKPOINT_D.md) for current status; the production main branch contains checkpoint C, while PR #2 for D remains draft according to the latest hosted record.
+The checkpoint C job on `main` is historical: its pinned source and preflight expect eight migrations and an empty DEV baseline. Do not run that job against the current project with a real owner. The `codex/checkpoint-d` branch adds a separate current-data audit described below. See [CHECKPOINT_D.md](CHECKPOINT_D.md) for current status; production main remains checkpoint C and PR #2 remains draft.
+
+## Current-data checkpoint D audit
+
+Dispatch the existing workflow on `codex/checkpoint-d`, with `run_persona_tests=false` and `confirm_ref=tghcovjdsxirhpexpqor`. The D job checks out the exact dispatch SHA, installs frozen dependencies without lifecycle scripts, builds/typechecks and runs local audit safety tests before injecting only `SUPABASE_DB_URL`. No service key is needed. `scripts/hosted-audit.mjs` compares migration hashes, guards/ACLs, RLS/policies, grants, private PDF bucket, immutable toolkit sources, Google-only membership and AI OFF inside a read-only transaction. It accepts existing owner/project data and prints only aggregate counts. It never creates test users, changes app/Auth settings, resets data, deploys or calls providers.
+
+The optional `apply_rubric_guard_repair=true` applies only additive `20261009000010` after the source-matched nine-migration audit, then repeats the audit against all ten migrations. This option changes only the rubric/prompt trigger function and records the new migration; no reseed, owner-weight rewrite, PDF/user deletion or provider activation occurs. Existing migration hashes must match and any other pending migration blocks this mode. Default remains read-only. A passing audit does not prove real student OAuth, authenticated UI/PDF workflows, hosted restore or live providers.
+
+The remaining sections describe the historical checkpoint C job and must not be used as instructions to test the nonempty current DEV project.
 
 The manual workflow **BimbingTA hosted validation** runs on GitHub's Ubuntu runner with Node 22 and Yarn 1.22.22. It checks out an exact reviewed checkpoint C commit, not a moving branch. The small launcher must exist on the default `main` branch for GitHub to show **Run workflow**. No automatic push, pull-request or schedule trigger is configured.
 

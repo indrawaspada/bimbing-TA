@@ -226,11 +226,11 @@ export function planRestore(archive) {
   return { project, rows, documents: m.documents.map((d) => remap(d)), ids };
 }
 
-export async function createRehearsalDb() {
+export async function createRehearsalDb({ throughVersion = '99999999999999' } = {}) {
   const db = await PGlite.create();
   try {
     await db.exec(await readFile(join(ROOT, "supabase/tests/local/00_supabase_shim.sql"), "utf8"));
-    for (const name of (await readdir(join(ROOT, "supabase/migrations"))).filter((n) => /^\d{14}_.+\.sql$/.test(n)).sort())
+    for (const name of (await readdir(join(ROOT, "supabase/migrations"))).filter((n) => /^\d{14}_.+\.sql$/.test(n) && n.slice(0, 14) <= throughVersion).sort())
       await db.exec(`begin;${await readFile(join(ROOT, "supabase/migrations", name), "utf8")};commit;`);
     await db.exec(execFileSync(process.execPath, [join(ROOT, "scripts/seed-rubric.mjs")], { encoding: "utf8" }));
     return db;

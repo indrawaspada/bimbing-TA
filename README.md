@@ -9,7 +9,7 @@ Status: **Checkpoint D implemented; hosted acceptance in progress**. Nine migrat
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files
 docs/                     SDD, data/API contract, acceptance tests (owner kit)
-supabase/migrations/      0001 identity … 0009 AI ledger (RLS deny-by-default, column grants, RPCs, storage policies)
+supabase/migrations/      0001 identity … 0009 AI ledger, 0010 rubric/prompt guard repair (RLS, grants, RPCs)
 supabase/tests/local/     TEST HARNESS ONLY: Supabase emulation (roles/auth/storage) for local Postgres
 scripts/seed-rubric.mjs   emits SQL that stores rule_engine.json + master prompt verbatim with sha256
 scripts/local-test-db.sh  TEST HARNESS: local Postgres 15 + PostgREST, applies migrations
