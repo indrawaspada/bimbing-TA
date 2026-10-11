@@ -314,6 +314,48 @@ function pdfFixture() {
   return Buffer.from(out);
 }
 try {
+  // Delay a real owner membership response while another tab switches to the
+  // student. A completed request must not restore the previous account's UI.
+  const racePage = await login(owner);
+  await racePage.goto(`${url}/proyek/${project.id}/keterlacakan`);
+  await racePage.getByRole("link", { name: "Mahasiswa", exact: true }).first().waitFor();
+  const broadcastSession = async (person) => racePage.evaluate((p) => {
+    const session = {
+      access_token: p.token, refresh_token: "synthetic", token_type: "bearer",
+      expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
+      user: { id: p.id, email: p.email, aud: "authenticated", role: "authenticated",
+        app_metadata: { provider: "google" }, user_metadata: {} },
+    };
+    localStorage.setItem("sb-127-auth-token", JSON.stringify(session));
+    const channel = new BroadcastChannel("sb-127-auth-token");
+    channel.postMessage({ event: "SIGNED_IN", session });
+    channel.close();
+  }, person);
+  let markOldClaimReady, releaseOldClaim, holdNextClaim = true;
+  const oldClaimReady = new Promise((resolve) => { markOldClaimReady = resolve; });
+  const releaseSignal = new Promise((resolve) => { releaseOldClaim = resolve; });
+  await racePage.route("**/rest/v1/rpc/claim_membership", async (route) => {
+    if (!holdNextClaim) { await route.continue(); return; }
+    holdNextClaim = false;
+    const response = await route.fetch();
+    markOldClaimReady();
+    await releaseSignal;
+    await route.fulfill({ response });
+  });
+  await broadcastSession(owner);
+  await oldClaimReady;
+  await broadcastSession(student);
+  await racePage.getByRole("link", { name: "Proyek saya", exact: true }).first().waitFor();
+  const oldResponseReceived = racePage.waitForResponse("**/rest/v1/rpc/claim_membership");
+  releaseOldClaim();
+  await (await oldResponseReceived).finished();
+  await racePage.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+  assert.equal(await racePage.getByRole("link", { name: "Mahasiswa", exact: true }).count(), 0,
+    "late owner claim must not replace student membership");
+  assert.ok(await racePage.getByRole("link", { name: "Proyek saya", exact: true }).count());
+  await racePage.context().close();
+  console.log("UI: account switch ignores a delayed previous-account membership response");
+
   const traceOwner = await login(owner);
   // Saving an existing record must retain the new values in its persisted
   // editor draft, including after reload and a subsequent edit of another field.

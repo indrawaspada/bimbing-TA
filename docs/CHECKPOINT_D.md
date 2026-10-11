@@ -188,6 +188,16 @@ Artifact recovery berhasil tersimpan **sebelum** mutasi. Cleanup run serta step 
 
 Report: `mode=hosted_synthetic_file_service_rehearsal`, `auth_issued_jwts=true`, `fixture_memberships_enrolled_by_sql=true`, `file_service_tested=true`, `cleanup_verified=true`, `original_data_unchanged=true`, `google_oauth_tested=false`, `browser_extraction_tested=false`, `provider_called=false`, `ai_enabled=false`, `production_restore_tested=false`. File adalah byte PDF opaque sintetis; tidak diparse/render oleh browser. Runner menerima hanya fixture yang disiapkannya, bukan ZIP operator atau mode apply/produksi. Ini bukti service-layer S01–S07/B02 manual parsial yang lebih kuat dari rehearsal SQL saja; Google/browser dan recovery produksi tetap terpisah.
 
+### Pergantian akun dan respons akses terlambat — 11 Oktober 2026
+
+Regresi browser lokal menemukan masalah pada `AuthProvider`: respons `claim_membership` owner yang ditunda dapat selesai setelah sesi beralih ke mahasiswa, lalu mengembalikan menu dosen, nama owner dan tab catatan privat ke tampilan. Ini status UI yang salah; pemeriksaan akses database tetap memakai JWT dan RLS. Reproduksi dengan kode sebelum perbaikan gagal pada assertion bahwa menu owner harus tidak ada, setelah respons mahasiswa sudah berhasil.
+
+Pemeriksaan akses kini diberi nomor permintaan. Hanya permintaan terbaru boleh memperbarui membership, error dan indikator loading; logout, sesi baru dan unmount membatalkan hasil lama. Membership dibersihkan segera ketika identitas berubah. Pembacaan sesi awal tidak boleh menimpa event login yang lebih baru. Callback Auth tetap sinkron dan pekerjaan RPC dijadwalkan sesudah callback kembali. Periksa akses memakai sesi terbaru; hasil sign-out yang terlambat atau gagal tidak menghapus sesi baru atau menunjukkan logout sukses palsu.
+
+Pada Windows/Node 24.15.0, build produksi/frontend TypeScript, Edge TypeScript dan seluruh suite UI lokal **lulus**. Tes baru menahan respons owner, menerima event lintas tab dengan sesi mahasiswa sintetis, menunggu akses mahasiswa, lalu melepas respons owner: menu/nama mahasiswa tetap berlaku tanpa menu owner. Regresi editor 1280/390/320 px, PDF.js worker/upload/ekstraksi/rentang/seal/reload, draf, diskusi, keputusan pertemuan, revisi/proof/reopen, sumber, CSV dan ZIP/restore lokal tetap lulus; tidak ada uncaught browser error. Browser menggunakan Supabase client terpasang, Auth/JWT dan Storage sintetis serta SQL/WASM lokal, bukan login Google atau layanan hosted.
+
+Tidak ada perubahan migrasi, data hosted, Auth/provider settings, anggaran atau aktivasi AI. Hasil hosted 26/26 tanggal 9 Oktober tetap bukti service-layer terpisah; pengujian Google mahasiswa dan PDF di browser hosted, recovery operator dan penerimaan produksi belum selesai. Target tetap Cloudflare Pages + Supabase, PR #2 draft dan main checkpoint C.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs

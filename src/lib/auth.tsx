@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { isConfigured, supabase, errorMessage } from './supabase';
 
@@ -24,37 +24,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const claimRevision = useRef(0);
+  const currentSession = useRef<Session | null>(null);
 
   const claim = useCallback(async (s: Session | null) => {
+    const revision = ++claimRevision.current;
+    setLoading(true);
     setError(null);
-    if (!s) { setMembership(null); return; }
-    // Server-side claim: identity comes from auth.users (verified Google email), never from client fields
-    const { data, error } = await supabase.rpc('claim_membership');
-    if (error) { setError(errorMessage(error)); setMembership(null); return; }
-    setMembership(data as Membership);
+    if (!s) { setMembership(null); setLoading(false); return; }
+    try {
+      // Keep Auth callbacks quick and run client requests after the event returns.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      if (revision !== claimRevision.current) return;
+      // Identity comes from verified auth.users, never from client role fields.
+      const { data, error } = await supabase.rpc('claim_membership');
+      if (revision !== claimRevision.current) return;
+      if (error) throw error;
+      setMembership(data as Membership);
+    } catch (e) {
+      if (revision !== claimRevision.current) return;
+      setError(errorMessage(e));
+      setMembership(null);
+    } finally {
+      if (revision === claimRevision.current) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     if (!isConfigured) { setLoading(false); return; }
     let alive = true;
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!alive) return;
-      setSession(data.session);
-      await claim(data.session);
+    const initialRevision = claimRevision.current;
+    const acceptSession = (s: Session | null) => {
+      if (currentSession.current?.user.id !== s?.user.id) setMembership(null);
+      currentSession.current = s;
+      setSession(s);
+      void claim(s);
+    };
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!alive || claimRevision.current !== initialRevision) return;
+      if (error) throw error;
+      acceptSession(data.session);
+    }).catch((e) => {
+      if (!alive || claimRevision.current !== initialRevision) return;
+      setError(errorMessage(e));
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((evt, s) => {
-      setSession(s);
-      if (evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') { setLoading(true); claim(s).finally(() => setLoading(false)); }
+      if (!alive) return;
+      if (evt === 'INITIAL_SESSION' || evt === 'SIGNED_IN' || evt === 'SIGNED_OUT'
+        || currentSession.current?.user.id !== s?.user.id) acceptSession(s);
+      else { currentSession.current = s; setSession(s); }
     });
-    return () => { alive = false; sub.subscription.unsubscribe(); };
+    return () => { alive = false; ++claimRevision.current; sub.subscription.unsubscribe(); };
   }, [claim]);
 
   const value: AuthState = {
     loading, session, membership, error,
     isOwner: membership?.status === 'active' && membership.role === 'owner',
-    refresh: async () => { setLoading(true); await claim(session); setLoading(false); },
-    signOut: async () => { await supabase.auth.signOut(); setMembership(null); setSession(null); },
+    refresh: async () => { await claim(currentSession.current); },
+    signOut: async () => {
+      const previousSession = currentSession.current;
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        if (currentSession.current === previousSession) {
+          currentSession.current = null; setSession(null); await claim(null);
+        }
+      } catch (e) {
+        if (currentSession.current === previousSession) setError(errorMessage(e));
+      }
+    },
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

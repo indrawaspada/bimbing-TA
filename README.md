@@ -11,6 +11,8 @@ Current-data Auth/PostgREST/Storage rehearsal passed [26/26 hosted checks](https
 
 Real Google student/browser PDF workflows, concurrency through Supabase/Edge, provider calls and general maintenance/production restore remain pending. PR #2 stays draft; production main remains checkpoint C. See [Checkpoint D setup and current validation](docs/CHECKPOINT_D.md) and [historical checkpoint C results](docs/HOSTED_STATUS.md).
 
+On 11 October 2026, local browser regression reproduced and fixed a stale membership response after switching accounts: a delayed owner response could restore owner menus after the student session had already loaded. Only the latest access check now updates UI state. Production build, Edge TypeScript and the complete local UI suite passed, including the delayed-response regression and PDF/traceability/export flows. This uses synthetic sessions and local SQL, not Google OAuth or hosted browser acceptance; AI remains OFF.
+
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files
@@ -67,7 +69,7 @@ yarn test:ai                # mock provider contracts + real SQL/WASM execution 
 yarn typecheck:edge         # server core/adapters/service TypeScript
 yarn test:workspace         # portable real SQL/WASM; synthetic HTTP/Auth/Storage adapter (27 checks)
 yarn test:ui:local          # Chromium UI + bundled PDF worker; synthetic Auth/Storage
-yarn test:restore           # manual ZIP integrity + disposable local SQL restore/rollback (22 checks)
+yarn test:restore           # manual ZIP integrity + disposable local SQL restore/rollback (28 checks)
 yarn test:workspace:rest    # native PostgreSQL + PostgREST regression; requires the B local stack
 yarn test:security:local    # LOCAL: fresh Postgres 15 + PostgREST emulation, 12 isolation tests
 yarn test:score             # scoring kernel (kit tests, score_reference.ts unchanged) + toolkit weights
