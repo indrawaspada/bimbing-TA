@@ -229,6 +229,7 @@ function VersionWorkspace({
   const [v, setV] = useState(version),
     [pdf, setPdf] = useState<PDFDocumentProxy | null>(null),
     [pages, setPages] = useState<Row[]>([]),
+    [pagesReady, setPagesReady] = useState(false),
     [ranges, setRanges] = useState<Row[]>([]),
     [page, setPage] = useState(1),
     [err, setErr] = useState(""),
@@ -248,6 +249,7 @@ function VersionWorkspace({
     setV(version);
   }, [version]);
   const loadText = useCallback(async () => {
+    setPagesReady(false);
     try {
       const [p, r] = await Promise.all([
         workspace.pages(v.id),
@@ -255,6 +257,7 @@ function VersionWorkspace({
       ]);
       setPages(p);
       setRanges(r);
+      setPagesReady(true);
     } catch (e: any) {
       setErr(e.message);
     }
@@ -380,26 +383,34 @@ function VersionWorkspace({
     });
   const initializeFallback = () =>
     run(async () => {
+      if (!pagesReady) throw new Error("Tunggu sampai halaman tersimpan selesai dimuat.");
+      const pageCount = pdf?.numPages || v.page_count || Number(fallbackCount);
       if (
-        !Number.isInteger(Number(fallbackCount)) ||
-        fallbackCount < 1 ||
-        fallbackCount > 2000
+        !Number.isInteger(pageCount) ||
+        pageCount < 1 ||
+        pageCount > 2000
       )
         throw new Error("Jumlah halaman harus 1–2000 sesuai file asli.");
+      const savedPages = new Set(pages.map((p) => p.pdf_page));
+      const missingPages = Array.from({ length: pageCount }, (_, i) => i + 1)
+        .filter((n) => !savedPages.has(n));
       let next = v;
-      for (let i = 1; i <= fallbackCount; i += 20) {
-        next = await workspace.rpc("version_save_pages", {
-          p_version: v.id,
-          p_expected: next.row_version,
-          p_page_count: Number(fallbackCount),
-          p_pages: Array.from(
-            { length: Math.min(20, fallbackCount - i + 1) },
-            (_, j) => ({ pdf_page: i + j, text: "", source: "pasted" }),
-          ),
-        });
-        setV(next);
+      try {
+        for (let i = 0; i < missingPages.length; i += 20) {
+          setProgress(`Menyiapkan halaman ${i + 1}–${Math.min(i + 20, missingPages.length)} dari ${missingPages.length} halaman yang belum tersimpan…`);
+          next = await workspace.rpc("version_save_pages", {
+            p_version: v.id,
+            p_expected: next.row_version,
+            p_page_count: pageCount,
+            p_pages: missingPages.slice(i, i + 20)
+              .map((n) => ({ pdf_page: n, text: "", source: "pasted" })),
+          });
+          setV(next);
+        }
+      } finally {
+        // Refresh partial progress too, including a response lost after commit.
+        await commit(next);
       }
-      await commit(next);
     });
   const currentPage = pages.find((p) => p.pdf_page === page);
   const count = pdf?.numPages || v.page_count || Number(fallbackCount) || 1;
@@ -437,7 +448,7 @@ function VersionWorkspace({
       {err && (
         <Alert tone="error" onClose={() => setErr("")}>
           {err}{" "}
-          <button className="underline" onClick={() => void onChanged()}>
+          <button className="underline" onClick={() => { void loadText(); void onChanged(); }}>
             Muat ulang
           </button>
         </Alert>
@@ -471,7 +482,7 @@ function VersionWorkspace({
             <Card className="space-y-3 p-4">
               <div className="flex flex-wrap gap-2">
                 <Button
-                  disabled={!pdf || busy}
+                  disabled={!pdf || busy || !pagesReady}
                   onClick={() => {
                     if (
                       !pages.length ||
@@ -488,15 +499,15 @@ function VersionWorkspace({
                   Ekstraksi ulang mengganti teks manual; konfirmasikan dahulu.
                 </span>
               </div>
-              {!pages.length && (
+              {pagesReady && pages.length < count && (
                 <div className="flex flex-wrap items-end gap-2">
                   <Field label="Jumlah halaman PDF asli (tempel teks)">
                     <Input
                       type="number"
                       min={1}
                       max={2000}
-                      value={fallbackCount}
-                      disabled={!!pdf}
+                      value={v.page_count || fallbackCount}
+                      disabled={!!pdf || !!v.page_count || busy}
                       onChange={(e) => setFallbackCount(Number(e.target.value))}
                     />
                   </Field>
@@ -505,8 +516,9 @@ function VersionWorkspace({
                     disabled={busy}
                     onClick={initializeFallback}
                   >
-                    Siapkan halaman untuk teks manual
+                    {pages.length ? "Lengkapi halaman untuk teks manual" : "Siapkan halaman untuk teks manual"}
                   </Button>
+                  {pages.length > 0 && <p className="text-xs text-ink-500">Teks dan label halaman yang sudah tersimpan tetap dipertahankan.</p>}
                 </div>
               )}
               {busy && <Spinner label={progress || "Menyimpan…"} />}

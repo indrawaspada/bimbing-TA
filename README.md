@@ -13,6 +13,8 @@ Real Google student/browser PDF workflows, concurrency through Supabase/Edge, pr
 
 On 11 October 2026, local browser regression reproduced and fixed a stale membership response after switching accounts: a delayed owner response could restore owner menus after the student session had already loaded. Only the latest access check now updates UI state. Production build, Edge TypeScript and the complete local UI suite passed, including the delayed-response regression and PDF/traceability/export flows. This uses synthetic sessions and local SQL, not Google OAuth or hosted browser acceptance; AI remains OFF.
 
+The same day's partial PDF recovery regression now confirms that interrupted manual page setup can resume after a failed save without replacing existing text/labels. Missing pages alone are added; the preserved page row/hash/version remains identical and text persists after reload. Build/Edge TypeScript and the complete local UI suite passed. Hosted PDF and real Google acceptance remain separate.
+
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files

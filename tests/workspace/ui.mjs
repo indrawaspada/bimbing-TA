@@ -7,7 +7,7 @@ import { readFile, writeFile, mkdir, chmod } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID, createHmac } from "node:crypto";
+import { randomUUID, createHmac, createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { brotliDecompressSync } from "node:zlib";
 import { chromium } from "playwright-core";
@@ -355,6 +355,79 @@ try {
   assert.ok(await racePage.getByRole("link", { name: "Proyek saya", exact: true }).count());
   await racePage.context().close();
   console.log("UI: account switch ignores a delayed previous-account membership response");
+
+  // An interrupted multi-request extraction leaves a valid partial page set.
+  // Resume must add missing pages without changing existing manual text/labels.
+  const partialInvite = await rest(owner.token, "POST", "/invitations", {
+    normalized_email: "partial.pdf.ui@example.test",
+  });
+  assert.equal(partialInvite.status, 201);
+  const partialProject = await rest(owner.token, "POST", "/projects", {
+    title: "Synthetic interrupted PDF recovery", invitation_id: partialInvite.json[0].id,
+  });
+  assert.equal(partialProject.status, 201);
+  const partialBytes = pdfFixture();
+  const partialUpload = await rest(owner.token, "POST", "/versions", {
+    project_id: partialProject.json[0].id, file_name: "partial.pdf",
+    file_size: partialBytes.length, mime_type: "application/pdf",
+  });
+  assert.equal(partialUpload.status, 201);
+  let partialVersion = partialUpload.json[0];
+  await as(owner.token, () => exec(
+    "insert into storage.objects(bucket_id,name,metadata) values('thesis-files',$1,$2)",
+    [partialVersion.file_path, { size: partialBytes.length, mimetype: "application/pdf" }],
+  ));
+  blobs.set(partialVersion.file_path, partialBytes);
+  const partialFinalize = await rest(owner.token, "POST", "/rpc/version_upload_result", {
+    p_version: partialVersion.id, p_expected: partialVersion.row_version,
+    p_hash: createHash("sha256").update(partialBytes).digest("hex"),
+  });
+  assert.equal(partialFinalize.status, 200);
+  partialVersion = partialFinalize.json[0];
+  const preservedText = "Teks manual yang harus dipertahankan";
+  const partialSave = await rest(owner.token, "POST", "/rpc/version_save_pages", {
+    p_version: partialVersion.id, p_expected: partialVersion.row_version,
+    p_page_count: 2,
+    p_pages: [{ pdf_page: 1, printed_label: "i", text: preservedText, source: "pasted" }],
+  });
+  assert.equal(partialSave.status, 200);
+  const preservedPage = (await exec("select * from pages where version_id=$1 and pdf_page=1",
+    [partialVersion.id])).rows[0];
+  const recoveryPage = await login(owner);
+  await recoveryPage.goto(`${url}/proyek/${partialProject.json[0].id}/naskah`);
+  await recoveryPage.getByLabel("Teks hasil ekstraksi / tempel teks").waitFor();
+  const resumePages = recoveryPage.getByRole("button", {
+    name: "Lengkapi halaman untuk teks manual", exact: true,
+  });
+  assert.equal(await resumePages.count(), 1,
+    "partially saved PDF pages must retain a manual recovery action");
+  // A failed retry must keep the recovery action and preserve the first page.
+  await recoveryPage.route("**/rest/v1/rpc/version_save_pages", async (route) => {
+    await route.fulfill({ status: 503, contentType: "application/json",
+      body: JSON.stringify({ message: "Simulasi penyimpanan halaman gagal" }) });
+  }, { times: 1 });
+  await resumePages.click();
+  await recoveryPage.getByRole("alert").filter({ hasText: "Simulasi penyimpanan halaman gagal" }).waitFor();
+  assert.deepEqual((await exec("select * from pages where version_id=$1 and pdf_page=1",
+    [partialVersion.id])).rows[0], preservedPage);
+  assert.equal(await resumePages.count(), 1);
+  await resumePages.click();
+  await recoveryPage.waitForFunction(() => ![...document.querySelectorAll("button")]
+    .some((b) => b.textContent === "Lengkapi halaman untuk teks manual"));
+  assert.deepEqual((await exec("select * from pages where version_id=$1 and pdf_page=1",
+    [partialVersion.id])).rows[0], preservedPage);
+  const completedPages = (await exec("select pdf_page,text,source from pages where version_id=$1 order by pdf_page",
+    [partialVersion.id])).rows;
+  assert.deepEqual(completedPages, [
+    { pdf_page: 1, text: preservedText, source: "pasted" },
+    { pdf_page: 2, text: "", source: "pasted" },
+  ]);
+  assert.equal((await exec("select status from versions where id=$1", [partialVersion.id])).rows[0].status, "extracted");
+  await recoveryPage.reload();
+  await recoveryPage.waitForFunction((text) =>
+    document.querySelector('textarea[rows="8"]')?.value === text, preservedText);
+  await recoveryPage.context().close();
+  console.log("UI: interrupted manual PDF page setup resumes without changing existing text, label, hash or row version");
 
   const traceOwner = await login(owner);
   // Saving an existing record must retain the new values in its persisted

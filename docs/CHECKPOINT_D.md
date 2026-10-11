@@ -198,6 +198,16 @@ Pada Windows/Node 24.15.0, build produksi/frontend TypeScript, Edge TypeScript d
 
 Tidak ada perubahan migrasi, data hosted, Auth/provider settings, anggaran atau aktivasi AI. Hasil hosted 26/26 tanggal 9 Oktober tetap bukti service-layer terpisah; pengujian Google mahasiswa dan PDF di browser hosted, recovery operator dan penerimaan produksi belum selesai. Target tetap Cloudflare Pages + Supabase, PR #2 draft dan main checkpoint C.
 
+### Pemulihan persiapan halaman PDF parsial — 11 Oktober 2026
+
+Regresi lokal berikutnya menemukan bahwa tombol persiapan teks manual hanya tampil ketika belum ada halaman. Apabila ekstraksi/persiapan berhenti sesudah sebagian halaman tersimpan, status versi tetap `extracting` dan halaman yang hilang belum mempunyai editor, tetapi aksi untuk melengkapinya sudah hilang. Ekstraksi ulang PDF dapat menimpa teks manual dan tidak selalu tersedia pada PDF yang memerlukan fallback. Reproduksi dengan satu halaman dari PDF dua halaman yang sudah tersimpan gagal pada kode sebelumnya: tidak ada aksi pemulihan manual.
+
+Tombol **Lengkapi halaman untuk teks manual** kini tersedia pada versi editable yang halamannya belum lengkap. Jumlah halaman mengikuti PDF atau jumlah yang sudah tercatat; setelah ditetapkan tidak dapat diubah melalui formulir pemulihan. RPC hanya menerima indeks halaman yang belum tersimpan, maksimum 20 per batch, memakai optimistic lock yang sudah ada. Teks, label, sumber, ID dan hash halaman lama tidak ditulis ulang. Daftar halaman harus selesai dimuat sebelum persiapan/ekstraksi dapat dimulai. Progres parsial dimuat kembali pada keberhasilan maupun kegagalan, termasuk respons yang hilang setelah commit; **Muat ulang** juga memuat kembali teks/rentang, bukan hanya metadata versi.
+
+Build produksi/frontend TypeScript, Edge TypeScript dan suite UI lokal lengkap **lulus** pada Windows/Node 24.15.0. Tes baru memakai PDF valid dua halaman, SQL/RLS disposable, Auth/Storage sintetis dan satu halaman manual yang tersimpan. Kegagalan RPC 503 menampilkan error dan mempertahankan aksi retry; percobaan berikutnya membuat hanya halaman kedua yang kosong. Seluruh row halaman pertama identik sebelum/sesudah, termasuk label, hash dan `row_version`; status versi menjadi `extracted`, dan teks tetap ada setelah reload. Regresi pergantian akun, editor desktop/mobile, PDF/worker/seal/reload, draf/diskusi, pertemuan/revisi, sumber serta CSV/ZIP/restore tetap lulus tanpa uncaught browser error.
+
+Ini bukti browser lokal untuk pemulihan teks parsial, bukan uji unggah terputus pada Supabase hosted atau Google mahasiswa. Tidak ada perubahan migrasi, data hosted, model/budget atau aktivasi AI. Acceptance Google mahasiswa/PDF hosted, restore operasional, konkurensi Edge/provider dengan izin dan penerimaan produksi masih tertunda; hosting tetap Cloudflare Pages + Supabase.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
