@@ -59,6 +59,13 @@ export async function exerciseBrowserPdfFlow(page, { origin, projectId, otherPro
     record('browser_student_own_workspace', page.url().includes('/proyek/' + projectId + '/'));
     record('browser_private_note_navigation_absent', await page.getByRole('link', { name: 'Catatan privat', exact: true }).count() === 0);
     for (const sequence of [1, 2]) {
+      stage = 'upload_ready_v' + sequence;
+      // setInputFiles does not wait for enabled actionability. Hosted draft reads
+      // are slower than local SQL, so wait for the app's own readiness gate.
+      await page.waitForFunction(() => {
+        const input = document.querySelector('input[type="file"]');
+        return input && !input.disabled;
+      });
       stage = 'upload_v' + sequence;
       const bytes = pdfFixture(sequence), suffix = sequence === 2 ? ' revisi' : '';
       const texts = ['Bab I Pendahuluan' + suffix, 'Bab III Metode validasi' + suffix];
@@ -67,6 +74,7 @@ export async function exerciseBrowserPdfFlow(page, { origin, projectId, otherPro
       });
       const extract = page.getByRole('button', { name: 'Ekstrak teks PDF', exact: true });
       await extract.waitFor();
+      stage = 'render_v' + sequence;
       await page.waitForFunction(() => {
         const canvas = document.querySelector('canvas');
         if (!canvas?.width || !canvas.height) return false;

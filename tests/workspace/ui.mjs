@@ -327,13 +327,29 @@ try {
     },
   };
   const browserFlowPage = await login(browserStudent, 390);
-  const browserFlow = await exerciseBrowserPdfFlow(browserFlowPage, {
+  let markDraftReady, releaseDraft, holdDraft = true;
+  const draftReady = new Promise((resolve) => { markDraftReady = resolve; });
+  const draftRelease = new Promise((resolve) => { releaseDraft = resolve; });
+  await browserFlowPage.route(url + "/rest/v1/workspace_drafts**", async (route) => {
+    if (holdDraft && route.request().method() === "GET") {
+      holdDraft = false; markDraftReady(); await draftRelease;
+    }
+    await route.continue();
+  });
+  const browserFlowPromise = exerciseBrowserPdfFlow(browserFlowPage, {
     origin: url, projectId: browserProject.json[0].id, otherProjectId: project.id, userId: browserStudent.id,
     api: browserApi, freshPage: () => login(browserStudent, 390),
   });
+  try {
+    await draftReady;
+    await browserFlowPage.getByLabel("Unggah naskah", { exact: true }).waitFor();
+    assert.equal(await browserFlowPage.getByLabel("Unggah naskah", { exact: true }).isDisabled(), true);
+    assert.equal((await readBrowser(`versions?project_id=eq.${browserProject.json[0].id}`)).length, 0);
+  } finally { releaseDraft(); }
+  const browserFlow = await browserFlowPromise;
   assert.equal(browserFlow.cases_passed, 18);
   await browserFlowPage.context().close();
-  console.log("UI: shared hosted-browser flow passes locally: real PDF render/extract/seal/reload/proof, fresh session context and cross-project denial (synthetic services)");
+  console.log("UI: shared hosted-browser flow waits for a delayed upload draft; PDF render/extract/seal/reload/proof, fresh session context and cross-project denial pass (synthetic services)");
 
   // Delay a real owner membership response while another tab switches to the
   // student. A completed request must not restore the previous account's UI.

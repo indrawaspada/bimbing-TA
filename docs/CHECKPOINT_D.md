@@ -240,6 +240,8 @@ Sebelum mutasi, entry JS/CSS preview wajib cocok dengan build workflow. Browser 
 
 Run awal [38216124168](https://github.com/indrawaspada/bimbing-TA/actions/runs/38216124168), source `3b38675`, lulus build/Edge, tes lokal dan audit dev read-only, tetapi prepare menolak stylesheet Google Fonts existing sebagai `browser_qa_unexpected_preview_assets`. Belum ada jurnal/fixture/mutasi hosted. Pengaman diperbaiki untuk memeriksa stylesheet exact yang sama dengan build dan hanya font dari dua family existing; stylesheet asing tetap ditolak. Run ini bukan bukti browser hosted lulus.
 
+Run kedua [38220164346](https://github.com/indrawaspada/bimbing-TA/actions/runs/38220164346), source `a4cd151`, lulus preflight aset/jurnal dan mencapai browser mahasiswa, tetapi berhenti `browser_qa_upload_v1_failed`. Cleanup wajib serta recovery sukses **07:55:15 UTC / 14:55:15 WIB**; 31 tabel original identik, AI OFF. Harness kemudian diperbaiki menunggu input upload enabled: Playwright `setInputFiles` tidak menunggu kesiapan kontrol seperti klik, sedangkan aplikasi menonaktifkannya sampai private upload draft selesai dimuat. Regresi lokal menahan GET draft, membuktikan input masih disabled dan belum ada versi, lalu melepas respons dan menjalankan alur lengkap. Run gagal ini tidak dihitung sebagai acceptance browser lulus.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
