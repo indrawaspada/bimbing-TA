@@ -34,7 +34,14 @@ const TABS = [
 ];
 
 export default function ProjectPage() {
-  const { id = "", tab = "ringkasan" } = useParams();
+  const { id = "" } = useParams();
+  // A new project gets fresh loaders, forms and drafts. Old responses belong
+  // to the unmounted workspace and cannot populate the new project's route.
+  return <ProjectWorkspace key={id} id={id} />;
+}
+
+function ProjectWorkspace({ id }: { id: string }) {
+  const { tab = "ringkasan" } = useParams();
   const { isOwner } = useAuth();
   const [project, setProject] = useState<Project | null | undefined>(undefined);
   const [milestones, setMilestones] = useState<Milestone[]>([]);

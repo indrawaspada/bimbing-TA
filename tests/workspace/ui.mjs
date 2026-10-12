@@ -492,6 +492,81 @@ try {
   await notePage.context().close();
   console.log("UI: slow autosave retains latest edits; real two-tab conflict is preserved and reload resolves it");
 
+  const navigationPage = await login(owner);
+  const projectA = project.id, projectB = partialProject.json[0].id;
+  const originalProjectA = (await exec("select * from projects where id=$1", [projectA])).rows[0];
+  await navigationPage.goto(`${url}/proyek/${projectA}/ringkasan`);
+  await navigationPage.getByRole("heading", { name: project.title, exact: true }).waitFor();
+  const navigateProject = (id) => navigationPage.evaluate((nextId) => {
+    window.history.pushState({ ...window.history.state,
+      idx: (window.history.state?.idx || 0) + 1, key: crypto.randomUUID() },
+    "", `/proyek/${nextId}/ringkasan`);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, id);
+  const isProjectRead = (r, id) => r.request().method() === "GET"
+    && new URL(r.url()).pathname === "/rest/v1/projects"
+    && new URL(r.url()).searchParams.get("id") === `eq.${id}`;
+  const holdProjectRead = async (id, fail = false) => {
+    let ready, release, held = false;
+    const responseReady = new Promise((resolve) => { ready = resolve; });
+    const releaseSignal = new Promise((resolve) => { release = resolve; });
+    await navigationPage.route("**/rest/v1/projects?**", async (route) => {
+      if (held || route.request().method() !== "GET"
+        || new URL(route.request().url()).searchParams.get("id") !== `eq.${id}`) {
+        await route.continue(); return;
+      }
+      held = true;
+      const response = await route.fetch();
+      ready();
+      await releaseSignal;
+      if (fail) await route.fulfill({ status: 503, contentType: "application/json",
+        body: JSON.stringify({ message: "Simulasi proyek lama gagal dimuat" }) });
+      else await route.fulfill({ response });
+    });
+    return { ready: responseReady, release };
+  };
+  const heldB = await holdProjectRead(projectB);
+  const readBResponse = navigationPage.waitForResponse((r) => isProjectRead(r, projectB));
+  await navigateProject(projectB);
+  await heldB.ready;
+  const staleProjectVisible = await navigationPage.getByRole("heading", {
+    name: project.title, exact: true,
+  }).count();
+  const staleFormVisible = await navigationPage.getByTestId("project-summary").count();
+  heldB.release();
+  await (await readBResponse).finished();
+  assert.equal(staleProjectVisible, 0, "old project metadata must disappear while the new route loads");
+  assert.equal(staleFormVisible, 0, "old editable forms must not remain active under the new project URL");
+  await navigationPage.getByRole("heading", { name: partialProject.json[0].title, exact: true }).waitFor();
+  await navigationPage.getByText("partial.pdf.ui@example.test", { exact: true }).waitFor();
+  for (const failOldProject of [false, true]) {
+    const heldA = await holdProjectRead(projectA, failOldProject);
+    const oldReadResponse = navigationPage.waitForResponse((r) => isProjectRead(r, projectA));
+    await navigateProject(projectA);
+    await heldA.ready;
+    await navigateProject(projectB);
+    await navigationPage.getByRole("heading", { name: partialProject.json[0].title, exact: true }).waitFor();
+    await navigationPage.getByText("partial.pdf.ui@example.test", { exact: true }).waitFor();
+    const summaryB = `Ringkasan proyek B: respons A ${failOldProject ? "gagal" : "berhasil"} diabaikan`;
+    const summarySaved = navigationPage.waitForResponse((r) => r.request().method() === "PATCH"
+      && new URL(r.url()).pathname === "/rest/v1/projects"
+      && new URL(r.url()).searchParams.get("id") === `eq.${projectB}`
+      && r.request().postDataJSON()?.summary === summaryB);
+    await navigationPage.getByTestId("project-summary").fill(summaryB);
+    heldA.release();
+    await (await oldReadResponse).finished();
+    await navigationPage.waitForTimeout(100);
+    assert.equal(await navigationPage.getByRole("heading", {
+      name: partialProject.json[0].title, exact: true,
+    }).count(), 1, "late old-project success/error must not replace the current project");
+    assert.equal(await navigationPage.getByTestId("project-summary").inputValue(), summaryB);
+    await (await summarySaved).finished();
+    assert.equal((await exec("select summary from projects where id=$1", [projectB])).rows[0].summary, summaryB);
+  }
+  assert.deepEqual((await exec("select * from projects where id=$1", [projectA])).rows[0], originalProjectA);
+  await navigationPage.context().close();
+  console.log("UI: project navigation hides stale forms, ignores old success/error responses and saves only the current project's edits");
+
   const traceOwner = await login(owner);
   // Saving an existing record must retain the new values in its persisted
   // editor draft, including after reload and a subsequent edit of another field.

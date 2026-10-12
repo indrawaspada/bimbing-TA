@@ -17,6 +17,8 @@ The same day's partial PDF recovery regression now confirms that interrupted man
 
 On 12 October 2026, slow autosave regression fixed another false-success case: a delayed first response could show saved while a newer edit remained unpersisted. Saves now run sequentially and use the acknowledged row version. Local browser tests verify newest text/reload persistence and preserve genuine two-tab conflicts without automatic overwrite. Production build, Edge TypeScript and the complete local UI suite passed; this does not close Google/hosted acceptance or enable AI.
 
+Project navigation also resets its workspace on project-ID changes. The local SPA regression verifies that old metadata/forms disappear while the new project loads, late old success/error responses cannot replace the current project and edits persist only to the intended project. Build/Edge TypeScript and the complete local UI suite passed; hosted Google/PDF acceptance remains pending and AI stays OFF.
+
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files

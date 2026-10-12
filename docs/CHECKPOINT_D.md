@@ -218,6 +218,16 @@ Build produksi/frontend TypeScript, Edge TypeScript dan seluruh suite UI lokal *
 
 Semua data regression bersifat sintetis dengan Auth/Storage lokal dan SQL/RLS disposable; tidak ada data hosted, migrasi, model atau budget yang diubah. Inventaris browser terhubung pada 12 Oktober kosong, sehingga Google mahasiswa/PDF hosted belum dapat diuji melalui sesi pengguna. Acceptance hosted, restore operasional dan penerimaan produksi tetap tertunda; provider menunggu izin eksplisit dan AI tetap OFF. Hosting tetap Cloudflare Pages + Supabase.
 
+### Perpindahan proyek dan respons loader lama — 12 Oktober 2026
+
+Regresi SPA lokal menemukan bahwa perpindahan URL ke proyek lain masih memakai state `ProjectPage` sebelumnya. Selama proyek baru dimuat, metadata dan formulir proyek lama tetap tampil di bawah URL baru. Loader lama juga dapat selesai setelah pengguna kembali ke proyek lain dan mengganti state saat ini. Tes sebelum perbaikan gagal karena judul dan formulir ringkasan proyek A masih ada saat respons proyek B ditahan.
+
+Workspace proyek kini mempunyai identitas React berdasarkan ID proyek. Pergantian proyek membuat state loader, formulir, viewer dan draf baru; workspace lama dilepas sehingga responsnya tidak dapat mengisi UI proyek baru. Perpindahan tab pada proyek yang sama tetap memakai identitas proyek yang sama. Pemeriksaan JWT/RLS dan kontrak API tidak diubah.
+
+Build produksi/frontend TypeScript, Edge TypeScript dan suite UI lokal lengkap **lulus**. Tes memakai navigasi SPA melalui History/PopState dan dua proyek owner sintetis. Saat respons B ditahan, metadata/formulir A tidak tampil. Setelah menahan respons A lalu kembali ke B, respons lama diuji dalam bentuk sukses dan gagal 503: judul, identitas mahasiswa dan isian B tetap berlaku. Isian terbaru berhasil disimpan ke B; seluruh row proyek A tetap identik sebelum/sesudah. Regresi akun, autosave lambat/konflik dua tab, pemulihan PDF parsial, keterlacakan desktop/mobile, PDF/worker/seal/reload, draf/diskusi, pertemuan/revisi, sumber serta CSV/ZIP/restore tetap lulus tanpa uncaught browser error.
+
+Auth/Storage seluruhnya sintetis, SQL/RLS lokal disposable; ini bukan Google OAuth, UI antarpengguna atau PDF hosted. Inventaris browser terhubung masih kosong. Tidak ada perubahan migrasi/data hosted, aktivasi provider atau AI; acceptance hosted/restore operasional/produksi tetap tertunda dan hosting tetap Cloudflare Pages + Supabase.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
