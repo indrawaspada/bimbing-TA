@@ -2,6 +2,8 @@
 
 This document preserves historical checkpoint C results from 7–8 October 2026. For the current ten-migration DEV project, real owner login, native D audit, isolated ledger concurrency and 26/26 current-data Auth/PostgREST/Storage checks with synthetic students, read [CHECKPOINT_D.md](CHECKPOINT_D.md). References below to an empty project, untested owner OAuth and the Emergent Auth URL describe the recorded inspection dates, not current configuration. The old empty-DEV persona suite must not be run on the current project containing a real owner.
 
+On 12 October, an opt-in deployed-browser PDF rehearsal was prepared on D with local safety/UI/build checks passing. It reuses real issued synthetic-student sessions and exact-scope cleanup without changing Google-only or AI OFF; hosted execution is pending at preparation. See the latest entries in [CHECKPOINT_D.md](CHECKPOINT_D.md).
+
 Verified: **2026-10-07 18:44:53 WIB** (11:44:53 UTC).
 Project: **bimbingTA-dev**, `tghcovjdsxirhpexpqor`; PostgreSQL 17.11.
 

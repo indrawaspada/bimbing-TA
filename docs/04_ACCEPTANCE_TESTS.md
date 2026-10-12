@@ -61,6 +61,10 @@ Six additional tests cover a nonempty target with existing owner/project/private
 
 Recovery scope was artifacted before mutation. All committed Auth/project/Storage/record fixtures were removed, and **31 original table counts/content hashes matched exactly**. No owner session, migration, seed, provider/Auth setting change or AI activation occurred. This is native service-layer S01–S07 and manual B02 evidence; source is a synthetic ZIP, fixture membership bypasses first-time OAuth, file bytes are not parsed/rendered, and no operator ZIP or persistent production recovery is supported by this runner. Google student/browser PDF and full maintenance/production acceptance remain separate.
 
+## Deployed-browser PDF rehearsal prepared — 12 October 2026
+
+The opt-in current-data file runner now also supports the deployed Cloudflare browser with an actual issued fixture student JWT. Two valid PDFs exercise canvas/PDF.js, ranges, sealing, reload, fresh context persistence and newer-version proof; access checks use real student APIs. SQL membership/finding setup remains synthetic and does not pass first-time Google login or owner UI verification. Original-data hash comparison and exact-scope cleanup cover the extra files/records. Local 13 safety checks, the shared 18-check browser flow, complete UI suite and build/Edge checks passed. Hosted execution must be recorded separately before claiming P01/P02/R02 browser evidence. General production restore and Google/Edge/provider acceptance remain pending; AI OFF.
+
 ## Account-switch browser regression — 11 October 2026
 
 The local UI suite now delays a valid owner membership response, broadcasts a synthetic student sign-in through the installed Supabase client, waits for student navigation, then releases the old response. Before the fix it incorrectly restored owner menus/name/private-note navigation; after the fix only the latest claim controls membership, errors and loading. Old initialization/claim results are invalidated on session changes and unmount. Database access remains enforced by JWT/RLS.

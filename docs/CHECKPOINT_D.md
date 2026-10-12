@@ -228,6 +228,16 @@ Build produksi/frontend TypeScript, Edge TypeScript dan suite UI lokal lengkap *
 
 Auth/Storage seluruhnya sintetis, SQL/RLS lokal disposable; ini bukan Google OAuth, UI antarpengguna atau PDF hosted. Inventaris browser terhubung masih kosong. Tidak ada perubahan migrasi/data hosted, aktivasi provider atau AI; acceptance hosted/restore operasional/produksi tetap tertunda dan hosting tetap Cloudflare Pages + Supabase.
 
+### Rehearsal browser PDF hosted disiapkan — 12 Oktober 2026
+
+Mode opsional `run_browser_file_rehearsal=true` memakai runner file current-data yang sama, wajib bersama `run_file_service_rehearsal=true`. Setelah 26 pemeriksaan layanan, browser membuka preview Cloudflare dengan sesi mahasiswa fixture yang benar-benar diterbitkan Supabase. Membership fixture sudah dienroll SQL; cabang existing membership pada `claim_membership` sah mengembalikan role tanpa mengubah Google-only. Ini tidak menguji login Google pertama atau membuat sesi owner.
+
+Alur browser mengunggah dua PDF valid sintetis dua halaman ke proyek B yang sudah tercatat dalam jurnal recovery, merender canvas, mengekstrak lewat PDF.js, menyimpan rentang, mengunci dan reload kedua versi, lalu mengajukan bukti versi kedua. API mahasiswa memeriksa hash file/teks/snapshot dan menolak penutupan revisi. Konteks browser baru memakai sesi fixture yang sama untuk memeriksa persistensi; proyek A tidak dapat dibuka. Tidak ada respons API browser tiruan pada mode hosted. Temuan awal dibuat sebagai setup SQL fixture, bukan aksi owner UI.
+
+Sebelum mutasi, entry JS/CSS preview wajib cocok dengan build workflow. Browser hanya boleh mengakses origin preview exact dan Auth/REST/Storage dev; fungsi/provider/host lain diblokir. Lingkungan proses browser hanya berisi path OS, tanpa admin/provider/GitHub credentials. Token fixture hanya di memori/konteks sementara, tanpa trace/HAR/storage-state. Recovery yang sama mencakup keempat objek PDF dan semua row baru; Storage dibersihkan sebelum metadata, dan 31 tabel original dibandingkan sesudahnya.
+
+**Persiapan lokal lulus**: 13/13 tes pengaman file/browser, build/frontend TypeScript, Edge TypeScript dan seluruh regresi UI. Alur bersama 18 pemeriksaan browser lulus pada Auth/Storage sintetis dan SQL/RLS disposable; rentang masih `confirmed=false` saat disimpan, lalu `true` setelah sealing sesuai kontrak SQL. **Uji browser hosted belum dijalankan pada tahap persiapan ini**; bukti eksekusi akan dicatat terpisah. AI tetap OFF, main tetap C dan PR #2 draft.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs

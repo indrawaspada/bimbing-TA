@@ -14,6 +14,8 @@ import { chromium } from "playwright-core";
 import binary from "@sparticuz/chromium";
 import { db, rest } from "./sql-adapter.mjs";
 import { rehearseBackup } from "../../scripts/lib/backup-restore.mjs";
+import { pdfFixture } from "./pdf-fixture.mjs";
+import { exerciseBrowserPdfFlow } from "../../scripts/lib/hosted-browser-qa.mjs";
 const localBrowser = process.env.BIMBINGTA_UI_BROWSER;
 if (!localBrowser && process.platform !== "linux")
   throw new Error("Set BIMBINGTA_UI_BROWSER to an installed Chromium browser executable on this platform.");
@@ -35,8 +37,9 @@ function token(id, email) {
   return `${head}.${body}.${createHmac("sha256", secret).update(`${head}.${body}`).digest("base64url")}`;
 }
 const owner = { id: randomUUID(), email: "owner.ui@example.test" },
-  student = { id: randomUUID(), email: "student.ui@example.test" };
-for (const p of [owner, student]) {
+  student = { id: randomUUID(), email: "student.ui@example.test" },
+  browserStudent = { id: randomUUID(), email: "browser.ui@example.test" };
+for (const p of [owner, student, browserStudent]) {
   p.token = token(p.id, p.email);
   await exec(
     "insert into auth.users(id,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data) values($1,$2,now(),$3,$4)",
@@ -280,40 +283,58 @@ async function login(person, width = 1280) {
   );
   return p;
 }
-function pdfFixture() {
-  const objs = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 7 0 R >> >> /Contents 4 0 R >>",
-    null,
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 7 0 R >> >> /Contents 6 0 R >>",
-    null,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-  ];
-  for (const [i, text] of [
-    [3, "Bab I Pendahuluan"],
-    [5, "Bab III Metode validasi"],
-  ]) {
-    const stream = `BT /F1 14 Tf 50 780 Td (${text}) Tj ET`;
-    objs[i] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
-  }
-  let out = "%PDF-1.4\n",
-    offset = [0];
-  for (let i = 0; i < objs.length; i++) {
-    offset.push(out.length);
-    out += `${i + 1} 0 obj\n${objs[i]}\nendobj\n`;
-  }
-  const xref = out.length;
-  out +=
-    `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` +
-    offset
-      .slice(1)
-      .map((n) => String(n).padStart(10, "0") + " 00000 n \n")
-      .join("") +
-    `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return Buffer.from(out);
-}
 try {
+  const browserInvite = await rest(owner.token, "POST", "/invitations", { normalized_email: browserStudent.email });
+  assert.equal(browserInvite.status, 201);
+  const browserProject = await rest(owner.token, "POST", "/projects", {
+    invitation_id: browserInvite.json[0].id, title: "Synthetic browser flow rehearsal",
+  });
+  assert.equal(browserProject.status, 201);
+  assert.equal((await rest(browserStudent.token, "POST", "/rpc/claim_membership", {})).status, 200);
+  let browserFinding;
+  // Use the HTTP adapter's queue while the UI is active; direct DB calls could
+  // otherwise overlap its transaction on the same disposable connection.
+  const browserRequest = async (person, method, path, body) => {
+    const response = await fetch(url + "/rest/v1/" + path, {
+      method, headers: { Authorization: "Bearer " + person.token, apikey: "test-only", "Content-Type": "application/json", Prefer: "return=representation" },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const text = await response.text();
+    return { status: response.status, json: text ? JSON.parse(text) : null };
+  };
+  const readBrowser = async (path) => {
+    const result = await browserRequest(browserStudent, "GET", path);
+    assert.equal(result.status, 200);
+    return result.json;
+  };
+  const browserApi = {
+    version: async (sequence) => (await readBrowser(`versions?project_id=eq.${browserProject.json[0].id}&sequence=eq.${sequence}`))[0],
+    pages: (id) => readBrowser(`pages?version_id=eq.${id}`),
+    ranges: (id) => readBrowser(`chapter_ranges?version_id=eq.${id}`),
+    setupFinding: async (id) => {
+      const result = await browserRequest(owner, "POST", "findings", {
+        project_id: browserProject.json[0].id, version_id: id, title: "Validasi PDF browser sintetis",
+        chapter: "B1", locator: { pdf_page: 1 }, acceptance_criterion: "Ajukan versi baru", evidence_type: "manual",
+      });
+      assert.equal(result.status, 201); browserFinding = result.json[0];
+    },
+    finding: async () => (await readBrowser(`findings?id=eq.${browserFinding.id}`))[0],
+    closeDenied: async (row) => {
+      const result = await browserRequest(browserStudent, "POST", "rpc/finding_transition", {
+        p_finding: row.id, p_expected: row.row_version, p_status: "verified_closed",
+      });
+      return result.status === 403 && result.json?.code === "42501";
+    },
+  };
+  const browserFlowPage = await login(browserStudent, 390);
+  const browserFlow = await exerciseBrowserPdfFlow(browserFlowPage, {
+    origin: url, projectId: browserProject.json[0].id, otherProjectId: project.id, userId: browserStudent.id,
+    api: browserApi, freshPage: () => login(browserStudent, 390),
+  });
+  assert.equal(browserFlow.cases_passed, 18);
+  await browserFlowPage.context().close();
+  console.log("UI: shared hosted-browser flow passes locally: real PDF render/extract/seal/reload/proof, fresh session context and cross-project denial (synthetic services)");
+
   // Delay a real owner membership response while another tab switches to the
   // student. A completed request must not restore the previous account's UI.
   const racePage = await login(owner);

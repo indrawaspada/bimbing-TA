@@ -19,6 +19,8 @@ On 12 October 2026, slow autosave regression fixed another false-success case: a
 
 Project navigation also resets its workspace on project-ID changes. The local SPA regression verifies that old metadata/forms disappear while the new project loads, late old success/error responses cannot replace the current project and edits persist only to the intended project. Build/Edge TypeScript and the complete local UI suite passed; hosted Google/PDF acceptance remains pending and AI stays OFF.
 
+An opt-in deployed-browser PDF rehearsal is now prepared for the existing current-data file workflow. Local safety tests (13/13), shared browser flow, complete UI suite and build/Edge checks passed on 12 October. Hosted mode uses actual issued synthetic-student sessions, two valid PDFs and mandatory cleanup; Google-only and AI OFF remain unchanged. Preparation does not constitute a hosted browser pass; see the latest [checkpoint evidence](docs/CHECKPOINT_D.md).
+
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files

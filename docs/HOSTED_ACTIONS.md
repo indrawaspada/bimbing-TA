@@ -44,6 +44,12 @@ Do not force-cancel this mode. On interruption, download `file-qa-recovery-<run_
 
 GitHub repository **Settings → Secrets and variables → Actions**:
 
+#### Optional deployed-browser PDF rehearsal
+
+On D, select both `run_file_service_rehearsal=true` and `run_browser_file_rehearsal=true`; keep other optional modes false. Browser mode reuses the journaled B project and its actual Supabase-issued student session after the 26 service checks. Two additional valid two-page PDFs exercise preview upload/render/PDF.js extraction/ranges/sealing/reload and newer-version proof, student closure denial, fresh session context and cross-project denial. An accepted finding is SQL fixture setup, not an owner UI action. Memberships remain explicitly SQL-enrolled synthetic students; first-time Google OAuth is not tested.
+
+`prepare --browser` and `run --browser` require preview entry assets to match the exact CI frontend build before creating fixtures. Browser requests are pinned to the preview origin and DEV Auth/REST/Storage APIs; functions/providers/foreign origins are denied. Only OS path variables reach Chromium. No owner session, screenshots, traces, HAR, token files or storage-state artifacts are created. Existing mandatory cleanup/recovery covers all four PDF objects and verifies all 31 original tables unchanged. Local safety tests **13/13**, shared browser flow and build/Edge checks passed on 12 October; hosted execution remains pending at preparation. AI stays OFF. Recovery uses the original cleanup command without `--browser`.
+
 | Location | Name | Value source |
 |---|---|---|
 | Secrets | `SUPABASE_DB_URL` | Supabase Connect → Session pooler, IPv4, port 5432; password URL-encoded |

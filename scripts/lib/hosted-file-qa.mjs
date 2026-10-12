@@ -65,7 +65,7 @@ export async function exerciseFileServices(db, state, sourceZip, transport) {
     check(UUID.test(created.json?.id), 'file_qa_invalid_auth_user');
     const signed = await transport.http(null, 'POST', '/auth/v1/token?grant_type=password', { body: { email: state.emails[role], password } });
     check(signed.status === 200 && typeof signed.json?.access_token === 'string' && signed.json?.user?.id === created.json.id, 'file_qa_signin_failed');
-    users[role] = { id: created.json.id, token: signed.json.access_token };
+    users[role] = { id: created.json.id, token: signed.json.access_token, session: signed.json };
   }
   // Privileged fixture enrollment, not Google OAuth or invitation claim evidence.
   for (const role of ['a','b'])
@@ -145,9 +145,63 @@ export async function exerciseFileServices(db, state, sourceZip, transport) {
   record('cross_student_restored_pages_denied', foreignPages.status === 200 && foreignPages.json?.length === 0);
   const anonymous = await transport.http(null, 'GET', `/rest/v1/projects?id=eq.${plan.project.id}`);
   record('anonymous_project_request_denied', anonymous.status === 401);
+  let browserResult = null;
+  if (transport.browser) {
+    // Browser writes stay in the already-journaled empty B project. No owner JWT.
+    const browserProject = state.project_ids[1], knownVersions = new Set();
+    let browserFinding;
+    const rows = async (path) => {
+      const result = await transport.http(b, 'GET', '/rest/v1/' + path);
+      check(result.status === 200 && Array.isArray(result.json), 'browser_qa_fixture_read_failed');
+      return result.json;
+    };
+    const known = (id) => check(UUID.test(id) && knownVersions.has(id), 'browser_qa_unknown_fixture_version');
+    const api = {
+      version: async (sequence) => {
+        check([1,2].includes(sequence), 'browser_qa_invalid_fixture_sequence');
+        const found = await rows(`versions?project_id=eq.${browserProject}&sequence=eq.${sequence}`);
+        check(found.length === 1 && UUID.test(found[0].id) && found[0].project_id === browserProject
+          && found[0].submitted_by === users.b.id, 'browser_qa_invalid_fixture_version');
+        knownVersions.add(found[0].id);
+        return found[0];
+      },
+      pages: async (id) => { known(id); return rows(`pages?version_id=eq.${id}&order=pdf_page.asc`); },
+      ranges: async (id) => { known(id); return rows(`chapter_ranges?version_id=eq.${id}`); },
+      setupFinding: async (id) => {
+        known(id);
+        const own = (await db.query("select id from versions where id=$1 and project_id=$2 and submitted_by=$3 and sequence=1 and status='confirmed'",
+          [id, browserProject, users.b.id])).rows;
+        check(own.length === 1 && !browserFinding, 'browser_qa_finding_scope_mismatch');
+        browserFinding = await insert('findings', { id: randomUUID(), project_id: browserProject, version_id: id,
+          title: 'Validasi PDF browser sintetis', chapter: 'B1', locator: { pdf_page: 1 },
+          acceptance_criterion: 'Ajukan halaman kedua pada versi baru yang terkunci', evidence_type: 'manual',
+          source: 'manual', approval_state: 'accepted', workflow_status: 'open',
+          created_by: owner, approved_by: owner, approved_at: new Date().toISOString() });
+      },
+      finding: async () => {
+        check(!!browserFinding, 'browser_qa_finding_missing');
+        const found = await rows(`findings?id=eq.${browserFinding.id}&project_id=eq.${browserProject}`);
+        check(found.length === 1, 'browser_qa_finding_read_failed');
+        return found[0];
+      },
+      closeDenied: async (row) => {
+        check(row.id === browserFinding?.id && row.project_id === browserProject, 'browser_qa_close_scope_mismatch');
+        const response = await transport.http(b, 'POST', '/rest/v1/rpc/finding_transition', { body: {
+          p_finding: row.id, p_expected: row.row_version, p_status: 'verified_closed',
+        } });
+        return response.status === 403 && response.json?.code === '42501';
+      },
+    };
+    browserResult = await transport.browser({ session: users.b.session, userId: users.b.id,
+      projectId: browserProject, otherProjectId: plan.project.id, api });
+    check(browserResult?.browser_extraction_tested === true && browserResult?.provider_called === false
+      && browserResult?.ai_enabled === false && browserResult?.google_oauth_tested === false,
+    'browser_qa_invalid_result');
+  }
   return { cases_passed: cases.length, checks: cases, restored_versions: plan.rows.versions.length, storage_files_transferred: plan.rows.versions.length,
     storage_bytes_verified: fileBytes, synthetic_fixture: true, auth_issued_jwts: true,
-    fixture_memberships_enrolled_by_sql: true, google_oauth_tested: false, browser_extraction_tested: false,
+    fixture_memberships_enrolled_by_sql: true, google_oauth_tested: false, browser_extraction_tested: !!browserResult,
+    ...(browserResult ? { browser: browserResult, total_cases_passed: cases.length + browserResult.cases_passed } : {}),
     file_service_tested: true, provider_called: false, ai_enabled: false, production_restore_tested: false };
 }
 

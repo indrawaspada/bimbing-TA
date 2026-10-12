@@ -141,6 +141,28 @@ test('partial upload/download failure can be recovered exactly without losing or
   } finally { await t.db.close(); }
 });
 
+test('browser failure after an extra B-project upload uses the same exact-scope cleanup and preserves original data', async () => {
+  const t = await target();
+  try {
+    t.transport.browser = async ({ session, userId, projectId, otherProjectId }) => {
+      assert.equal(session.user.id, userId);
+      assert.equal(projectId, t.state.project_ids[1]);
+      assert.equal(otherProjectId, t.state.project_ids[0]);
+      const version = (await t.db.query('insert into versions(project_id,file_name,file_size,submitted_by) values($1,$2,1,$3) returning *',
+        [projectId, 'interrupted-browser.pdf', userId])).rows[0];
+      await t.db.query("insert into storage.objects(bucket_id,name,metadata) values('thesis-files',$1,$2)",
+        [version.file_path, { size: 1, mimetype: 'application/pdf' }]);
+      t.files.set(version.file_path, new Uint8Array([37]));
+      throw Object.assign(new Error('synthetic_browser_failed'), { code: 'synthetic_browser_failed' });
+    };
+    await assert.rejects(exerciseFileServices(t.db, t.state, source.zip, t.transport), { code: 'synthetic_browser_failed' });
+    assert.equal(t.files.size, 3);
+    await cleanupFileServices(t.db, t.state, t.transport.admin);
+    assert.equal(t.files.size, 0);
+    assert.deepEqual(await captureRehearsalState(t.db), t.state.baseline);
+  } finally { await t.db.close(); }
+});
+
 test('failed Storage cleanup retains fixture SQL registry for retry; subsequent recovery and repeated cleanup are safe', async () => {
   const t = await target();
   try {
@@ -208,6 +230,8 @@ test('planner binds only explicit existing student and new target project, rejec
 test('file QA CLI refuses missing/wrong target, apply, or arbitrary ZIP before reading credentials', () => {
   const script = fileURLToPath(new URL('../../scripts/hosted-file-rehearsal.mjs', import.meta.url));
   for (const args of [[], ['--apply'], ['run','--confirm-ref=wrong','--use-existing-owner'],
+    ['cleanup','--confirm-ref=tghcovjdsxirhpexpqor','--use-existing-owner','--browser'],
+    ['run','--confirm-ref=tghcovjdsxirhpexpqor','--use-existing-owner','--browser','--browser'],
     ['run','--confirm-ref=tghcovjdsxirhpexpqor','--use-existing-owner','backup.zip']]) {
     const result = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
     assert.equal(result.status, 1);

@@ -13,8 +13,12 @@ const fixturePath = join(ROOT, '.secrets/hosted-file-qa-source.zip');
 const exists = async (path) => access(path).then(() => true, () => false);
 let pool, client;
 const args = process.argv.slice(2), mode = args[0];
+const browserSelected = args.includes('--browser');
+const baseArgs = args.filter((a) => a !== '--browser');
 try {
-  if (args.length !== 3 || !['prepare','run','cleanup'].includes(mode) || !args.includes(`--confirm-ref=${DEV_REF}`) || !args.includes('--use-existing-owner'))
+  if (baseArgs.length !== 3 || args.length !== (browserSelected ? 4 : 3)
+    || !['prepare','run','cleanup'].includes(mode) || !baseArgs.includes(`--confirm-ref=${DEV_REF}`)
+    || !baseArgs.includes('--use-existing-owner') || (browserSelected && mode === 'cleanup'))
     throw new FileQaError('file_qa_requires_mode_dev_and_existing_owner_confirmation');
   if (mode === 'cleanup' && !await exists(journalPath)) { console.log('FILE QA CLEANUP: no journal; no writes.'); }
   else {
@@ -33,6 +37,11 @@ try {
       return { status: response.status, json: await response.json().catch(() => null) };
     };
     const reference = await auditReference();
+    let browserQa;
+    if (browserSelected) {
+      browserQa = await import('./lib/hosted-browser-qa.mjs');
+      await browserQa.verifyPreviewBuild(await readFile(join(ROOT, 'dist/index.html'), 'utf8'));
+    }
     let result;
     if (mode === 'prepare') {
       if (await exists(journalPath) || await exists(fixturePath)) throw new FileQaError('file_qa_previous_journal_requires_cleanup');
@@ -58,7 +67,8 @@ try {
       await writeFile(fixturePath, source.zip, { flag: 'wx', mode: 0o600 });
       await writeFile(journalPath, JSON.stringify(state, null, 2), { flag: 'wx', mode: 0o600 });
       result = { mode: 'prepared_no_hosted_writes', journal_ready: true, original_tables_hashed: 31, fixture_hash_verified: true,
-        recovery_contains_secrets: false, google_oauth_tested: false, ai_enabled: false };
+        recovery_contains_secrets: false, browser_selected: browserSelected,
+        preview_build_verified: !!browserQa, google_oauth_tested: false, ai_enabled: false };
     } else {
       const state = JSON.parse(await readFile(journalPath, 'utf8'));
       validateFileQaState(state);
@@ -67,6 +77,7 @@ try {
         const bytes = await readFile(fixturePath);
         let failure;
         try { result = await exerciseFileServices(client, state, bytes, { url: cfg.url, admin, http,
+          ...(browserQa ? { browser: browserQa.runHostedBrowserPdf } : {}),
           signedDownload: async (url) => {
             const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(20000) });
             return { status: response.status, bytes: new Uint8Array(await response.arrayBuffer()) };
@@ -76,7 +87,8 @@ try {
         const cleanup = await cleanupFileServices(client, state, admin);
         await auditHosted(client, reference);
         if (failure) throw failure;
-        result = { mode: 'hosted_synthetic_file_service_rehearsal', passed: true, source_sha: process.env.GITHUB_SHA,
+        result = { mode: browserSelected ? 'hosted_synthetic_browser_and_file_rehearsal' : 'hosted_synthetic_file_service_rehearsal',
+          passed: true, source_sha: process.env.GITHUB_SHA,
           project_ref: DEV_REF, ...result, ...cleanup };
       } else {
         result = { mode: 'file_qa_recovery', ...await cleanupFileServices(client, state, admin) };
@@ -86,10 +98,10 @@ try {
       await unlink(journalPath);
       await unlink(fixturePath).catch(() => {});
     }
-    console.log(mode === 'run' ? 'HOSTED FILE SERVICE REHEARSAL PASS' : 'HOSTED FILE QA ' + mode.toUpperCase());
+    console.log(mode === 'run' ? (browserSelected ? 'HOSTED BROWSER FILE REHEARSAL PASS' : 'HOSTED FILE SERVICE REHEARSAL PASS') : 'HOSTED FILE QA ' + mode.toUpperCase());
     console.log(JSON.stringify(result, null, 2));
     if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY,
-      `## Current-data synthetic file QA: ${mode}\n\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nPassword-JWT/student memberships are synthetic fixtures; no real Google OAuth or browser extraction. No AI/provider/production restore.\n`);
+      `## Current-data synthetic file QA: ${mode}\n\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nPassword-JWT/student memberships are SQL-enrolled synthetic fixtures; no real Google OAuth. Browser rendering/extraction is tested only when explicitly selected and reported. No AI/provider/production restore.\n`);
   }
 } catch (error) {
   // No messages/details/actual SQL rows: they may contain credentials, emails or signed URLs.
