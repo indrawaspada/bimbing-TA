@@ -6,6 +6,7 @@ import { digest } from './backup-restore.mjs';
 import { FILE_QA_REF, FileQaError } from './hosted-file-qa.mjs';
 export const BROWSER_QA_ORIGIN = 'https://codex-checkpoint-d.bimbing-ta.pages.dev';
 const SUPABASE_ORIGIN = 'https://' + FILE_QA_REF + '.supabase.co';
+const FONT_STYLESHEET = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const check = (ok, code) => { if (!ok) throw new FileQaError(code); };
 
@@ -17,6 +18,11 @@ export function browserEnvironment(env = process.env) {
 export function browserRequestAllowed(url, method = 'GET') {
   const target = new URL(url);
   if (target.origin === BROWSER_QA_ORIGIN) return !target.search && ['GET','HEAD'].includes(method);
+  if (['GET','HEAD'].includes(method)) {
+    if (target.href === FONT_STYLESHEET) return true;
+    if (target.origin === 'https://fonts.gstatic.com' && !target.search
+      && /^\/s\/(plusjakartasans|jetbrainsmono)\/v[0-9]+\/[a-zA-Z0-9_-]+\.(woff2|ttf)$/.test(target.pathname)) return true;
+  }
   if (target.origin !== SUPABASE_ORIGIN) return false;
   return /^\/(auth|rest|storage)\/v1\//.test(target.pathname);
 }
@@ -26,8 +32,10 @@ function entryAssets(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g)].map((m) => m[1]);
   const styles = [...html.matchAll(/<link\b[^>]*>/g)].filter((m) => /\brel="stylesheet"/.test(m[0]))
     .map((m) => m[0].match(/\bhref="([^"]+)"/)?.[1]);
+  const appStyles = styles.filter((src) => /^\/assets\/index-[a-zA-Z0-9_-]+\.css$/.test(src || ''));
   check(scripts.length === 1 && /^\/assets\/index-[a-zA-Z0-9_-]+\.js$/.test(scripts[0])
-    && styles.length === 1 && /^\/assets\/index-[a-zA-Z0-9_-]+\.css$/.test(styles[0]), 'browser_qa_unexpected_preview_assets');
+    && appStyles.length === 1 && styles.every((src) => src === appStyles[0] || src === FONT_STYLESHEET),
+    'browser_qa_unexpected_preview_assets');
   return [...scripts, ...styles];
 }
 

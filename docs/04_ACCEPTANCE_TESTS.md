@@ -63,7 +63,7 @@ Recovery scope was artifacted before mutation. All committed Auth/project/Storag
 
 ## Deployed-browser PDF rehearsal prepared — 12 October 2026
 
-The opt-in current-data file runner now also supports the deployed Cloudflare browser with an actual issued fixture student JWT. Two valid PDFs exercise canvas/PDF.js, ranges, sealing, reload, fresh context persistence and newer-version proof; access checks use real student APIs. SQL membership/finding setup remains synthetic and does not pass first-time Google login or owner UI verification. Original-data hash comparison and exact-scope cleanup cover the extra files/records. Local 13 safety checks, the shared 18-check browser flow, complete UI suite and build/Edge checks passed. Hosted execution must be recorded separately before claiming P01/P02/R02 browser evidence. General production restore and Google/Edge/provider acceptance remain pending; AI OFF.
+The opt-in current-data file runner now also supports the deployed Cloudflare browser with an actual issued fixture student JWT. Two valid PDFs exercise canvas/PDF.js, ranges, sealing, reload, fresh context persistence and newer-version proof; access checks use real student APIs. SQL membership/finding setup remains synthetic and does not pass first-time Google login or owner UI verification. Original-data hash comparison and exact-scope cleanup cover the extra files/records. Local 13 safety checks, the shared 18-check browser flow, complete UI suite and build/Edge checks passed. Hosted execution must be recorded separately before claiming P01/W01 browser evidence. General production restore and Google/Edge/provider acceptance remain pending; AI OFF.
 
 ## Account-switch browser regression — 11 October 2026
 

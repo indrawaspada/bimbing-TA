@@ -12,6 +12,10 @@ test('browser process receives OS paths but never admin/provider/Auth secrets', 
 test('browser network is pinned to preview and DEV manual APIs; provider/function/foreign URLs are denied', () => {
   assert.equal(browserRequestAllowed('https://codex-checkpoint-d.bimbing-ta.pages.dev/assets/index-a.js'), true);
   assert.equal(browserRequestAllowed('https://tghcovjdsxirhpexpqor.supabase.co/rest/v1/rpc/version_confirm', 'POST'), true);
+  assert.equal(browserRequestAllowed('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap'), true);
+  assert.equal(browserRequestAllowed('https://fonts.gstatic.com/s/plusjakartasans/v12/fixture.woff2'), true);
+  assert.equal(browserRequestAllowed('https://fonts.gstatic.com/s/other/v12/fixture.woff2'), false);
+  assert.equal(browserRequestAllowed('https://fonts.gstatic.com/s/plusjakartasans/v12/fixture.woff2?token=private'), false);
   for (const url of ['https://api.openai.com/v1/responses', 'https://other.supabase.co/rest/v1/projects',
     'https://tghcovjdsxirhpexpqor.supabase.co/functions/v1/ai',
     'https://codex-checkpoint-d.bimbing-ta.pages.dev/?token=private',
@@ -30,5 +34,9 @@ test('preview entry assets must match the reviewed build; foreign scripts or ano
   await assert.rejects(verifyPreviewBuild(html, response(html.replace('index-a.js', 'index-b.js'))),
     { code: 'browser_qa_preview_build_mismatch' });
   await assert.rejects(verifyPreviewBuild(html, response(html + '<script src="https://foreign.test/injected.js"></script>')),
+    { code: 'browser_qa_unexpected_preview_assets' });
+  const fonts = '<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />';
+  assert.deepEqual(await verifyPreviewBuild(html + fonts, response(html + fonts)), { preview_build_verified: true });
+  await assert.rejects(verifyPreviewBuild(html, response(html + '<link rel="stylesheet" href="https://foreign.test/injected.css">')),
     { code: 'browser_qa_unexpected_preview_assets' });
 });
