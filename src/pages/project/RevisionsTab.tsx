@@ -30,7 +30,7 @@ export default function RevisionsTab({ project }: { project: any }) {
         workspace.rows("findings", project.id),
         workspace.rows("versions", project.id),
       ]);
-      setRows(f);
+      setRows(f.filter(x => x.approval_state === "accepted"));
       setVersions(v.filter((x) => x.status === "confirmed"));
     } catch (e: any) {
       setErr(e.message);
@@ -280,7 +280,7 @@ function FindingForm({
                 project_id: projectId,
                 version_id: d.value.version_id || null,
               });
-            await d.reset();
+            if (!row) await d.reset();
             await onDone();
           } catch (e: any) {
             setErr(e.message);

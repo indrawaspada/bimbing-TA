@@ -1,5 +1,7 @@
 # Hosted validation (Supabase DEV project) — setup & checklist
 
+Scope: initial checkpoint C setup and synthetic validation on an empty dedicated DEV project. The current DEV project already has a real owner and ten migrations; do not repeat bootstrap, seed or the empty-DEV suite there. Current status and remaining acceptance are in [CHECKPOINT_D.md](CHECKPOINT_D.md). Google owner login and the native D audit have passed; student flows remain pending. The current migration runner is pinned to the documented DEV URL/database and verifies recorded SQL hashes before applying pending migrations. AI stays off until the owner explicitly authorizes activation and live tests.
+
 Runtime: **Node 22.x** (verified 22.23.3; `@supabase/*` 2.117.2 require `>=22`). Yarn 1 classic. No `--ignore-engines`.
 
 ## 1. Configuration files (never commit, never paste in chat)
@@ -22,8 +24,11 @@ Scripts print only the project ref / DB host; errors pass through a redactor.
    Production: disable the **Email provider**, keep Google enabled and global signup ON;
    `app_config.allowed_providers` stays `{google}`. Only the SQL membership allowlist grants app data access.
    See [Supabase general configuration](https://supabase.com/docs/guides/auth/general-configuration).
-3. Auth → URL Configuration: Site URL = preview origin; Redirect URLs:
-   `https://bimbing-ta-copilot.preview.emergentagent.com/**`, `http://localhost:5173/**`.
+3. Auth → URL Configuration: use the actual **Cloudflare Pages** origin. Current D preview:
+   `https://codex-checkpoint-d.bimbing-ta.pages.dev/`; Redirect URLs include
+   `https://codex-checkpoint-d.bimbing-ta.pages.dev/**` and `http://localhost:5173/**` for local development.
+   Add the verified production Cloudflare origin when releasing D. The frontend redirects Google OAuth
+   to `${window.location.origin}/`; no Emergent deployment or preview script is part of the current procedure.
 
 ## 3. Apply pending migrations (eight files including checkpoint C and conflict HTTP 409 fix) (no reset, no data deletion)
 ```
@@ -66,8 +71,11 @@ Storage API behavior or actual Google OAuth. The HTTP suite and real login check
 
 ## 5. Real Google OAuth — manual checklist (synthetic sessions do NOT count)
 After step 4, confirm global **Allow new users to sign up = ON**, disable the Email provider,
-and confirm Google remains enabled. Then rebuild the preview
-(`bash scripts/preview-emergent.sh`, Node 22) and use real Google accounts:
+and confirm Google remains enabled. Build with `yarn build` (Node 22), publish through the existing
+Cloudflare Pages/GitHub integration, and use real Google accounts on the verified Cloudflare origin.
+On current DEV, owner G1/G2 have already passed: do not bootstrap another owner. Continue with the
+student/outsider checklist using separate real Google browser profiles. See `CHECKPOINT_D.md` for
+the difference between synthetic password-JWT/API passes and real OAuth/browser acceptance.
 
 | # | Action | Expected |
 |---|---|---|
@@ -81,7 +89,8 @@ and confirm Google remains enabled. Then rebuild the preview
 | G8 | Student opens `/proyek/<owner-other-project-id>` | "Proyek tidak ditemukan" |
 
 Verification query (SQL editor): `select role, verified_email, active from public.memberships;`
-Record date, accounts used (masked), pass/fail per row. Until done, OAuth status = **not tested**.
+Record date, accounts used (masked), pass/fail per row. Current owner OAuth passed; student/outsider
+Google browser acceptance is still pending. Synthetic API tokens do not close G4–G8.
 
 ## 6. Cleanup / safety
 - Never run `supabase db reset` on any project with real users.
@@ -92,3 +101,10 @@ Checkpoint C implementation and its hosted validation limits: [CHECKPOINT_C.md](
 ## 7. GitHub Actions (no local admin.env needed)
 
 See [HOSTED_ACTIONS.md](HOSTED_ACTIONS.md). The manual workflow consumes repository Secrets/Variables inside GitHub’s runner. Default mode runs read-only preflight. Full persona mode creates synthetic fixtures, temporarily allows `email` in the app membership policy, then restores Google-only and removes that run’s data. Full mode first applies only the reviewed additive conflict-code migration 20261007000008 on an empty DEV project (or verifies it is already exact), then validates all eight migration hashes. A final read-only preflight verifies cleanup even when a test fails. Neither mode changes global Auth settings, resets the database, deploys, or calls an AI model.
+
+The paragraph above describes the historical C job on main, which must not run on the current owner-populated DEV.
+For D use its read-only audit, isolated native ledger, SQL rollback or optional current-data file-service mode.
+The latter passed 26/26 with exact-scope cleanup and original data unchanged, while preserving Google-only app
+policy and AI OFF. It requires Email Auth already enabled for admin-created synthetic password identities,
+never changes provider settings, never generates an owner token and explicitly SQL-enrolls only fixture students.
+Recovery journal upload must succeed before fixture creation. See the executed run and limits in `CHECKPOINT_D.md`.

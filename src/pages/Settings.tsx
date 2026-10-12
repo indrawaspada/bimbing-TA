@@ -1,5 +1,6 @@
+import AISettings from '@/components/AISettings';
 import { useEffect, useState } from 'react';
-import { BookCheck, Bot, HardDrive, LogOut, ShieldCheck } from 'lucide-react';
+import { BookCheck, HardDrive, LogOut, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { bytes, fmtDate } from '@/lib/format';
@@ -40,10 +41,7 @@ export default function SettingsPage() {
           {rubric.dimension_weights?.stage_chapter_weights?.final && <p className="mt-1 text-xs text-ink-500">Bobot bab (final): {Object.entries(rubric.dimension_weights.stage_chapter_weights.final).map(([k, v]) => `${k} ${v}%`).join(' · ')} · proposal dinormalisasi untuk Bab I–III</p>}
         </Card>
       )}
-      <Card className="p-5">
-        <p className="flex items-center gap-2 font-bold"><Bot className="h-4 w-4" />Asisten AI</p>
-        <p className="mt-2 text-sm"><Badge>Nonaktif</Badge> <span className="text-ink-500">Semua alur manual berjalan tanpa API key. Pemilihan provider/model, uji koneksi, kuota dan persetujuan data tersedia pada checkpoint D.</span></p>
-      </Card>
+      {isOwner ? <AISettings /> : <Card className="p-5"><p className="font-bold">Asisten AI</p><p className="mt-2 text-sm">Gunakan tab Asisten AI pada proyek. Model dan anggaran ditentukan pembimbing; alur manual tetap tersedia.</p></Card>}
     </div>
   );
 }

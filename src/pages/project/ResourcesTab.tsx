@@ -167,7 +167,7 @@ function ResourceForm({
                 ...values,
                 project_id: projectId,
               });
-            await d.reset();
+            if (!row) await d.reset();
             await onDone();
           } catch (e: any) {
             setErr(e.message);

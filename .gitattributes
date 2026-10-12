@@ -1,0 +1,5 @@
+# These files are hashed as exact bytes by seed/migration validation.
+/data/rule_engine.json text eol=lf
+/data/master_prompt.txt text eol=lf
+/supabase/migrations/*.sql text eol=lf
+/tests/hosted/rollback.sql text eol=lf

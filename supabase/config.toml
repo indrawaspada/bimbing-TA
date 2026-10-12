@@ -1,0 +1,4 @@
+# Publishable keys are not JWTs. This function verifies the user's bearer JWT
+# through Supabase Auth getUser and then checks active membership/project access.
+[functions.ai]
+verify_jwt = false

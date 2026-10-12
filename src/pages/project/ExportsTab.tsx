@@ -46,6 +46,10 @@ export default function ExportsTab({ project }: { project: any }) {
       "meetings",
       "resources",
       "milestones",
+      "traceability_rows",
+      "ai_runs",
+      "ai_messages",
+      "ai_rating_reviews",
     ];
     const data = Object.fromEntries(
       await Promise.all(

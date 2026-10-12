@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rubricBytes = readFileSync(join(root, 'data/rule_engine.json'));
@@ -45,7 +45,7 @@ if (Object.values(chapters).reduce((a, v) => a + v.weight, 0) !== 100) throw new
 
 const rubricText = rubricBytes.toString('utf8');
 const promptText = promptBytes.toString('utf8');
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) process.stdout.write(`
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.stdout.write(`
 insert into public.rubric_versions (version, content_json, source_sha256, rule_count, dimension_weights, weights_provisional, is_active)
 values ('rule_engine-v${rubric.version}', ${q(rubricText)}::jsonb, '${sha(rubricBytes)}', ${rubric.rules.length}, ${q(JSON.stringify(weights))}::jsonb, false, true)
 on conflict (version) do update set dimension_weights = excluded.dimension_weights, weights_provisional = false
