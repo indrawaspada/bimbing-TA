@@ -15,6 +15,8 @@ On 11 October 2026, local browser regression reproduced and fixed a stale member
 
 The same day's partial PDF recovery regression now confirms that interrupted manual page setup can resume after a failed save without replacing existing text/labels. Missing pages alone are added; the preserved page row/hash/version remains identical and text persists after reload. Build/Edge TypeScript and the complete local UI suite passed. Hosted PDF and real Google acceptance remain separate.
 
+On 12 October 2026, slow autosave regression fixed another false-success case: a delayed first response could show saved while a newer edit remained unpersisted. Saves now run sequentially and use the acknowledged row version. Local browser tests verify newest text/reload persistence and preserve genuine two-tab conflicts without automatic overwrite. Production build, Edge TypeScript and the complete local UI suite passed; this does not close Google/hosted acceptance or enable AI.
+
 ## Layout
 ```
 data/                     rule_engine.json (92 rules), master_prompt.txt, model_catalog.json — verbatim kit files

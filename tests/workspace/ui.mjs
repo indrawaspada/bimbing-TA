@@ -429,6 +429,69 @@ try {
   await recoveryPage.context().close();
   console.log("UI: interrupted manual PDF page setup resumes without changing existing text, label, hash or row version");
 
+  const notePage = await login(owner);
+  await notePage.goto(`${url}/proyek/${project.id}/catatan`);
+  const noteInput = notePage.getByTestId("private-notes").locator("textarea");
+  await noteInput.waitFor();
+  let markFirstNoteReady, releaseFirstNote, holdFirstNote = true;
+  const firstNoteReady = new Promise((resolve) => { markFirstNoteReady = resolve; });
+  const releaseNoteSignal = new Promise((resolve) => { releaseFirstNote = resolve; });
+  await notePage.route("**/rest/v1/private_notes**", async (route) => {
+    if (route.request().method() !== "PATCH" || !holdFirstNote) {
+      await route.continue(); return;
+    }
+    holdFirstNote = false;
+    // The first save commits in SQL, but the client cannot see its new version yet.
+    const response = await route.fetch();
+    markFirstNoteReady();
+    await releaseNoteSignal;
+    await route.fulfill({ response });
+  });
+  const isNoteSave = (response, body) => response.request().method() === "PATCH"
+    && response.url().includes("/rest/v1/private_notes")
+    && response.request().postDataJSON()?.body === body;
+  const firstNoteText = "Catatan pertama dengan respons tertunda";
+  const newestNoteText = "Catatan terbaru yang diketik saat respons pertama tertunda";
+  const firstNoteResponse = notePage.waitForResponse((r) => isNoteSave(r, firstNoteText));
+  const newestNoteResponse = notePage.waitForResponse((r) => isNoteSave(r, newestNoteText));
+  await noteInput.fill(firstNoteText);
+  await firstNoteReady;
+  await noteInput.fill(newestNoteText);
+  // Keep the response withheld past the application's 1,200 ms debounce.
+  await notePage.waitForTimeout(1500);
+  releaseFirstNote();
+  await (await firstNoteResponse).finished();
+  await (await newestNoteResponse).finished();
+  await notePage.getByTestId("private-notes").getByText(/^Tersimpan /).waitFor();
+  assert.equal((await exec("select body from private_notes where project_id=$1",
+    [project.id])).rows[0].body, newestNoteText,
+  "a slow autosave must retain newer edits instead of reporting false success");
+  await notePage.reload();
+  await notePage.waitForFunction((text) =>
+    document.querySelector('[data-testid="private-notes"] textarea')?.value === text, newestNoteText);
+
+  // Serializing one tab must preserve genuine optimistic conflicts across tabs.
+  const staleNotePage = await login(owner);
+  await staleNotePage.goto(`${url}/proyek/${project.id}/catatan`);
+  await staleNotePage.getByTestId("private-notes").locator("textarea").waitFor();
+  const winnerText = "Catatan yang disimpan tab pertama";
+  const winnerResponse = notePage.waitForResponse((r) => isNoteSave(r, winnerText));
+  await notePage.getByTestId("private-notes").locator("textarea").fill(winnerText);
+  await (await winnerResponse).finished();
+  const loserText = "Catatan lama dari tab kedua";
+  const loserResponse = staleNotePage.waitForResponse((r) => isNoteSave(r, loserText));
+  await staleNotePage.getByTestId("private-notes").locator("textarea").fill(loserText);
+  await (await loserResponse).finished();
+  await staleNotePage.getByRole("alert").filter({ hasText: "Konflik: data diubah di sesi lain." }).waitFor();
+  assert.equal((await exec("select body from private_notes where project_id=$1",
+    [project.id])).rows[0].body, winnerText);
+  await staleNotePage.getByRole("button", { name: "Muat versi terbaru", exact: true }).click();
+  await staleNotePage.waitForFunction((text) =>
+    document.querySelector('[data-testid="private-notes"] textarea')?.value === text, winnerText);
+  await staleNotePage.context().close();
+  await notePage.context().close();
+  console.log("UI: slow autosave retains latest edits; real two-tab conflict is preserved and reload resolves it");
+
   const traceOwner = await login(owner);
   // Saving an existing record must retain the new values in its persisted
   // editor draft, including after reload and a subsequent edit of another field.

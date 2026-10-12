@@ -208,6 +208,16 @@ Build produksi/frontend TypeScript, Edge TypeScript dan suite UI lokal lengkap *
 
 Ini bukti browser lokal untuk pemulihan teks parsial, bukan uji unggah terputus pada Supabase hosted atau Google mahasiswa. Tidak ada perubahan migrasi, data hosted, model/budget atau aktivasi AI. Acceptance Google mahasiswa/PDF hosted, restore operasional, konkurensi Edge/provider dengan izin dan penerimaan produksi masih tertunda; hosting tetap Cloudflare Pages + Supabase.
 
+### Autosave lambat dan konflik dua tab — 12 Oktober 2026
+
+Regresi browser lokal menemukan kehilangan perubahan terbaru pada `useAutosave`, hook yang dipakai ringkasan proyek dan catatan privat. Penyimpanan pertama dapat selesai di database sementara responsnya masih tertunda. Ketika pengguna mengetik lagi, penyimpanan kedua sebelumnya memakai `row_version` lama dan mendapat hasil kosong; respons pertama yang datang kemudian mengubah indikator menjadi **Tersimpan**, padahal database hanya berisi teks pertama. Tes pada kode sebelumnya gagal saat membandingkan isi database dengan isian terbaru setelah indikator tersebut tampil.
+
+Penyimpanan dari satu instance hook kini berjalan berurutan. Perubahan terbaru menunggu respons sebelumnya dan memakai `row_version` yang baru diakui; indikator Tersimpan hanya tampil ketika seluruh isian saat ini cocok dengan snapshot yang diakui server. Error dan hasil kosong tetap ditampilkan sebagai gagal/konflik. Perubahan target, reload baseline eksplisit dan unmount membatasi respons lama agar tidak memperbarui UI target baru. Konflik tidak dicoba ulang atau ditimpa otomatis; aksi timpa eksplisit yang sudah ada tetap terpisah dari autosave biasa.
+
+Build produksi/frontend TypeScript, Edge TypeScript dan seluruh suite UI lokal **lulus**, Windows/Node 24.15.0. Regresi menahan respons pertama melewati debounce 1.200 ms, mengetik isian baru, melepas respons, lalu memeriksa isi database dan reload. Tes dua tab owner sintetis memuat versi yang sama, menyimpan perubahan tab pertama, dan memastikan tab kedua mendapat konflik tanpa mengubah isi database. **Muat versi terbaru** mengambil isi yang menang. Regresi pergantian akun, pemulihan PDF parsial, keterlacakan desktop/mobile, PDF/worker/seal, draf/diskusi, pertemuan/revisi, sumber, CSV serta ZIP/restore tetap lulus tanpa uncaught browser error.
+
+Semua data regression bersifat sintetis dengan Auth/Storage lokal dan SQL/RLS disposable; tidak ada data hosted, migrasi, model atau budget yang diubah. Inventaris browser terhubung pada 12 Oktober kosong, sehingga Google mahasiswa/PDF hosted belum dapat diuji melalui sesi pengguna. Acceptance hosted, restore operasional dan penerimaan produksi tetap tertunda; provider menunggu izin eksplisit dan AI tetap OFF. Hosting tetap Cloudflare Pages + Supabase.
+
 ## Referensi kontrak (dibuka 8 Oktober 2026)
 
 - https://developers.openai.com/api/docs/guides/structured-outputs
